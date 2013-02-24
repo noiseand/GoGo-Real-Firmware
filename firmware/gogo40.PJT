@@ -1,0 +1,78 @@
+[PROJECT]
+Target=gogo40.hex
+Development_Mode=
+Processor=0x4550
+Processor_Text=PIC18F4550
+ToolSuite=CCS
+
+[Directories]
+Include=C:\Program Files\PICC\devices\;C:\Program Files\PICC\drivers\;
+Library=
+LinkerScript=
+
+[Target Data]
+FileList=gogo40.c
+BuildTool=C-COMPILER
+OptionString=+FH
+AdditionalOptionString=
+BuildRequired=1
+
+[gogo40.c]
+Type=4
+Path=
+FileList=
+BuildTool=
+OptionString=
+AdditionalOptionString=
+
+[mru-list]
+1=gogo40.c
+
+[Windows]
+0=0000 %S 0 0 796 451 3 0
+
+[Opened Files]
+1=gogo40.c
+2=bootloader.h
+3=C:\Program Files\PICC\devices\18f4550.H
+4=C:\Program Files\PICC\drivers\usb_cdc.h
+5=C:\Program Files\PICC\drivers\pic18_usb.h
+6=C:\Program Files\PICC\drivers\usb_hw_layer.h
+7=C:\Program Files\PICC\drivers\usb_desc_cdc.h
+8=C:\Program Files\PICC\drivers\usb.h
+9=C:\Program Files\PICC\drivers\usb.c
+10=C:\Program Files\PICC\drivers\pic18_usb.c
+11=C:\Program Files\PICC\drivers\ctype.h
+12=GOGO40.H
+13=logovm.h
+14=stack.h
+15=evalOpcode.h
+16=C:\Program Files\PICC\drivers\stdlib.H
+17=C:\Program Files\PICC\drivers\stddef.h
+18=C:\Program Files\PICC\drivers\string.h
+19=logovm.c
+20=evalOpcode.c
+21=stack.c
+22=memoryMap.h
+23=
+[Units]
+Count=1
+1=gogo40.c
+Link=0
+[defines]
+enabled=0
+D1=
+V1=
+[fileformats]
+forcecoff=0
+debug=0
+error=2
+object=0
+list=0
+scratch=0
+sta=0
+tre=0
+allerrors=1
+allwarnings=1
+stayupne=3
+stayupoe=0
