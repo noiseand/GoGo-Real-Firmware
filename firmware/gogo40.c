@@ -642,7 +642,7 @@ void initBoard() {
    set_tris_c(PIC_TRIS_C);
    set_tris_d(PIC_TRIS_D);
    set_tris_e(PIC_TRIS_E);
-   setup_port_a(ALL_ANALOG);
+   setup_adc_ports(AN0_TO_AN7);
    setup_adc(ADC_CLOCK_INTERNAL);
    gblCurSensorChannel=defaultPort;
    set_adc_channel(defaultPort);

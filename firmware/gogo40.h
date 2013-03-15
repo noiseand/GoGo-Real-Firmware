@@ -33,7 +33,7 @@
 #define CMD_TALK_TO_MOTOR   0x04
 #define CMD_BURST_MODE      0x05
 #define CMD_MISC_CONTROL   0x06
-#define CMD_Version			0x07
+#define CMD_Version         0x07
 
 #define TURN_USER_LED_ON      0
 #define TURN_USER_LED_OFF     1
@@ -114,7 +114,7 @@
 #define MTR4_CC         PIN_C7
 #define MTR4_EN         PIN_D2
 
-#define PIC_TRIS_B   0b00000000
+#define PIC_TRIS_B   0b00000011
 #define PIC_TRIS_A   0b00101111
 #define PIC_TRIS_C   0b00000000
 #define PIC_TRIS_D   0b00000010

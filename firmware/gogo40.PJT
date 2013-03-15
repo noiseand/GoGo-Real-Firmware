@@ -32,17 +32,17 @@ AdditionalOptionString=
 0=0000 %S 0 0 796 451 3 0
 
 [Opened Files]
-1=gogo40.c
+1=logovm.h
 2=bootloader.h
-3=C:\Program Files\PICC\devices\18f4550.H
-4=C:\Program Files\PICC\drivers\usb_cdc.h
-5=C:\Program Files\PICC\drivers\pic18_usb.h
-6=C:\Program Files\PICC\drivers\usb_hw_layer.h
-7=C:\Program Files\PICC\drivers\usb_desc_cdc.h
-8=C:\Program Files\PICC\drivers\usb.h
-9=C:\Program Files\PICC\drivers\usb.c
-10=C:\Program Files\PICC\drivers\pic18_usb.c
-11=C:\Program Files\PICC\drivers\ctype.h
+3=evalopcode.c
+4=evalOpcode.h
+5=gogo40.c
+6=gogo40.h
+7=logovm.c
+8=memoryMap.h
+9=stack.c
+10=stack.h
+11=
 12=GOGO40.H
 13=logovm.h
 14=stack.h
