@@ -20,9 +20,6 @@
 void setHigh(int16 Pin);
 void setLow(int16 Pin);
 int  readPin(int16 Pin);
-short getBit(int InByte, int BitNo);
-void setBit(int *InByte, int BitNo);
-void clearBit(int *InByte, int BitNo);
 void Ping(int Param);
 void MotorControl(int MotorCmd);
 void SetMotorPower(int Power);

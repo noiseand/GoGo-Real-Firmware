@@ -41,10 +41,10 @@ void clock_isr() {
    ttTimer0 =0;
    do {
       if (gblTimer0Counter < MotorCount) {
-         if (getBit(gblMotorONOFF, gblCurrentDutyIndex) == ON) {
+         if (((gblMotorONOFF >> gblCurrentDutyIndex) & 1) == ON) {
             if (gblMtrDuty[gblCurrentDutyIndex] < 255) {
-               if (getBit(gblMotorMode, gblCurrentDutyIndex) == MOTOR_NORMAL) {
-                  if (getBit(gblMotorDir, gblCurrentDutyIndex))
+               if (((gblMotorMode >> gblCurrentDutyIndex) & 1) == MOTOR_NORMAL) {  
+                  if ( (int1) ((gblMotorDir >> gblCurrentDutyIndex) & 1)) 
                      output_low(MotorCWPins[gblCurrentDutyIndex]);
                   else
                      output_low(MotorCCPins[gblCurrentDutyIndex]);
@@ -54,10 +54,10 @@ void clock_isr() {
          }
       } else {
          for (i=0 ; i<MotorCount ; i++) {
-            if (getBit(gblMotorONOFF, i) == ON) {
+            if (((gblMotorONOFF >> i) & 1) == ON) {
                if (gblMtrDuty[i] > 0) {
-                  if (getBit(gblMotorMode, i) == MOTOR_NORMAL) {
-                     if (getBit(gblMotorDir, i))
+                  if (((gblMotorMode >> i) & 1) == MOTOR_NORMAL) {  
+                     if ((gblMotorDir >> i) & 1)
                         output_high(MotorCWPins[i]);
                      else
                         output_high(MotorCCPins[i]);
@@ -69,12 +69,12 @@ void clock_isr() {
       }
       minDuty = 255;
       for (i=0;i<=MotorCount;i++) {
-         if ((minDuty >= gblMtrDuty[i]) && !(getBit(gblDutyCycleFlag,i))) {
+         if ((minDuty >= gblMtrDuty[i]) && !((gblDutyCycleFlag >> i) & 1) ) {  
             minDuty = gblMtrDuty[i];
             nextDutyIndex = i;
          }
       }
-      setBit(&gblDutyCycleFlag, nextDutyIndex);
+      gblDutyCycleFlag |= (1<<nextDutyIndex);
       if (gblTimer0Counter < MotorCount)
          periodTilNextInterrupt = minDuty - gblMtrDuty[gblCurrentDutyIndex];
       else
@@ -136,18 +136,6 @@ void timer1ISR() {
 
 #int_timer2
 void timer2ISR() {}
-
-short getBit(int InByte, int BitNo) {
-   return ((InByte >> BitNo) & 1);
-}
-
-void setBit(int *InByte, int BitNo) {
-   *InByte |= (1<<BitNo);
-}
-
-void clearBit(int *InByte, int BitNo) {
-   *InByte &= ~(1<<BitNo);
-}
 
 void MotorControl(int MotorCmd) {
    int i;
@@ -226,9 +214,9 @@ void SetMotorMode(int motorMode) {
    for (i=0;i<MotorCount;i++) {
       if ((gblActiveMotors >> i) & 1)
          if (motorMode == MOTOR_NORMAL)
-            clearBit(&gblMotorMode, i);
+            gblMotorMode &= ~(1<<i);
          else
-            setBit(&gblMotorMode, i);
+            gblMotorMode |= (1<<i);
    }
 }
 
@@ -251,7 +239,7 @@ void ENLow(int MotorNo) {
     }else{
         foo=MotorNo+1;
     }
-    if (!(getBit(gblMotorONOFF,foo))){
+    if (!((gblMotorONOFF >> foo) & 1)){  
         return;
     }
    if (MotorNo<2){
@@ -268,7 +256,7 @@ void MotorON(int MotorNo) {
    int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
-   if (getBit(gblMotorDir,MotorNo)) {
+   if ((int1)((gblMotorDir >> MotorNo) & 1) ) {  
       output_low(MtrCC);
       output_high(MtrCW);
    } else {
@@ -276,7 +264,7 @@ void MotorON(int MotorNo) {
       output_low(MtrCW);
    }
    ENHigh(MotorNo);
-   setBit(&gblMotorONOFF,MotorNo);
+   gblMotorONOFF |= (1<<MotorNo);
 }
 
 void MotorOFF(int MotorNo) {
@@ -287,21 +275,21 @@ void MotorOFF(int MotorNo) {
    output_high(MtrCW);
     output_low(MotorENPins[MotorNo]);
     ENLow(MotorNo);
-   clearBit(&gblMotorONOFF,MotorNo);
+   gblMotorONOFF &= ~(1<<MotorNo);
 }
 
 void MotorRD(int MotorNo) {
    int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
-   if (getBit(gblMotorDir,MotorNo)){
+   if ((gblMotorDir >> MotorNo) & 1){  
         output_low(MtrCW);
       output_high(MtrCC);
-        clearBit(&gblMotorDir,MotorNo);
+        gblMotorDir &= ~(1<<MotorNo);
    }else{
-        output_high(MtrCW);
+      output_high(MtrCW);
       output_low(MtrCC);
-      setBit(&gblMotorDir,MotorNo);
+      gblMotorDir |= (1<<MotorNo);
    }
 }
 
@@ -309,7 +297,7 @@ void MotorThisWay(int MotorNo) {
    int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
-   setBit(&gblMotorDir,MotorNo);
+   gblMotorDir |= (1<<MotorNo);
    output_low(MtrCC);
    output_high(MtrCW);
 }
@@ -319,7 +307,7 @@ void MotorThatWay(int MotorNo) {
    int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
-   clearBit(&gblMotorDir,MotorNo);
+   gblMotorDir &= ~(1<<MotorNo);
    output_low(MtrCW);
    output_high(MtrCC);
 }
@@ -328,7 +316,7 @@ void MotorCoast(int MotorNo) {
    int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
-   clearBit(&gblMotorONOFF,MotorNo);
+   gblMotorONOFF &= ~(1<<MotorNo);
    output_low(MtrCW);
    output_low(MtrCC);
 }
@@ -401,7 +389,7 @@ void SetBurstMode(int SensorBits, int Mode) {
 unsigned int16 readSensor(int sensorNo) {
    if (gblCurSensorChannel != sensorNo) {
       set_adc_channel(sensorNo);
-	  delay_us(channelSwitchDelay);
+     delay_us(channelSwitchDelay);
       gblCurSensorChannel=sensorNo;
    }
    return read_adc();
