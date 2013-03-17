@@ -1,23 +1,23 @@
 [PROJECT]
-Target=gogo40.hex
+Target=GoGoReal.hex
 Development_Mode=
 Processor=0x4550
 Processor_Text=PIC18F4550
 ToolSuite=CCS
 
 [Directories]
-Include=C:\Program Files\PICC\devices\;C:\Program Files\PICC\drivers\;
+Include=C:\Program Files\PICC\devices\;C:\Program Files\PICC\drivers\;C:\Program Files (x86)\PICC\drivers\;C:\Program Files (x86)\PICC\devices;
 Library=
 LinkerScript=
 
 [Target Data]
-FileList=gogo40.c
+FileList=GoGoReal.c
 BuildTool=C-COMPILER
 OptionString=+FH
 AdditionalOptionString=
 BuildRequired=1
 
-[gogo40.c]
+[GoGoReal.c]
 Type=4
 Path=
 FileList=
@@ -26,38 +26,19 @@ OptionString=
 AdditionalOptionString=
 
 [mru-list]
-1=gogo40.c
+1=GoGoReal.c
 
 [Windows]
 0=0000 %S 0 0 796 451 3 0
 
 [Opened Files]
-1=logovm.h
-2=bootloader.h
-3=evalopcode.c
-4=evalOpcode.h
-5=gogo40.c
-6=gogo40.h
-7=logovm.c
-8=memoryMap.h
-9=stack.c
-10=stack.h
-11=
-12=GOGO40.H
-13=logovm.h
-14=stack.h
-15=evalOpcode.h
-16=C:\Program Files\PICC\drivers\stdlib.H
-17=C:\Program Files\PICC\drivers\stddef.h
-18=C:\Program Files\PICC\drivers\string.h
-19=logovm.c
-20=evalOpcode.c
-21=stack.c
-22=memoryMap.h
-23=
+1=GoGoReal.c
+2=logovm.c
+3=
+4=
 [Units]
 Count=1
-1=gogo40.c
+1=GoGoReal.c
 Link=0
 [defines]
 enabled=0

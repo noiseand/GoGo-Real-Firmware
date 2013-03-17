@@ -19,12 +19,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-#include "bootloader.h"
 #case
-#include <GOGO40.H>
-
-#include <logovm.h>
+#include "bootloader.h"
 #include <stdlib.H>
+#include <GoGoReal_Defines.H>
+#include <GoGoReal_Variables.h>
+#include <GoGoReal.h>
+#include <logovm.c>
 
 #use fast_io(A)
 #use fast_io(B)
@@ -32,204 +33,91 @@
 #use fast_io(D)
 #use fast_io(E)
 
-#define defaultPort      0
-#define channelSwitchDelay   50   // delay time in us after switching adc channels
-// Don't decrease this value without testing.
-// If the delay is too short (i.e. 10us) the adc won't
-// have enough time to stabilize before reading the
-// next channel.
-#define T1_COUNTER      7287
-
-#define  CMD_TIMEOUT_PERIOD  2     // determins how long befor the board will reset
-// the command state. Units in 1/10 of a second
-
-/////////////////////////////////////////////////////////////////
-//  Function Declaration
-/////////////////////////////////////////////////////////////////
-void setHigh(IOPointer Pin);
-void setLow(IOPointer Pin);
-int  readPin(IOPointer Pin);
-
-short getBit(int InByte, int BitNo);
-void setBit(int *InByte, int BitNo);
-void clearBit(int *InByte, int BitNo);
-
-void Ping(int Param);
-void TalkToMotor(int MotorBits);
-void MotorControl(int MotorCmd);
-void SetMotorPower(int Power);
-void ChangeMotorPower(int delta);
-void sortMtrDuty();
-void SetMotorMode(int motorMode); // normal or servo
-
-void ENHigh(int groupNo);
-void ENLow(int groupNo);
-
-void MotorON(int MotorNo);
-void MotorOFF(int MotorNo);
-void MotorRD(int MotorNo);
-void MotorThisWay(int MotorNo);
-void MotorThatWay(int MotorNo);
-void MotorCoast(int MotorNo);
-void miscControl(int cur_param, int cur_ext, int cur_ext_byte);
-
-void beep();
-
-void SetBurstMode(int SensorBits, int Mode);
-void DoSensorStuff();
-unsigned int16 readSensor(int sensorNo);
-long getSensorVal();
-void switchAdcChannel(int channelNo);
-
-void ProcessInput();
-void ProcessRFInput();
-void init_variables();
-void intro();
-void Halt();
-void initBoard();
-
-void timer2ISR();
-void version();
-
-/////////////////////////////////////////////////////////////////
-//  Global Variables
-/////////////////////////////////////////////////////////////////
-
-IOPointer  MotorENPins [MotorCount]={  MTR1_EN, MTR2_EN, MTR3_EN, MTR4_EN};
-IOPointer  MotorCWPins [MotorCount]={  MTR1_CW, MTR2_CW, MTR3_CW, MTR4_CW};
-IOPointer  MotorCCPins [MotorCount]={  MTR1_CC, MTR2_CC, MTR3_CC, MTR4_CC};
-
-unsigned int CMD_STATE;
-
-int gbl_cur_cmd, gbl_cur_param, gbl_cur_ext, gbl_cur_ext_byte;
-int gblBurstModeBits;
-int gblBurstModeCounter=0;   // tracks which sensor is the current burst mode sensor
-
-int1 gblSlowBurstMode=0;  // determinds which burst mode we're in (0=normal, 1=slow)
-int1 gblSlowBurstModeTimerHasTicked=0;  // ticks every 1/72 sec (by timer0)
-
-
-int gblCurSensorChannel;
-
-int gblMotorMode=0b00000000;   // default to normal mode
-int gblActiveMotors;
-int gblMotorDir=0;
-int gblMotorONOFF = 0;
-int gblMtrDuty[MotorCount+1] = {0xff,0xff,0xff,0xff,0xff};  // Motor PWM Duty cycle
-unsigned int gblTimer0Counter = MotorCount; // Motor duty cycle counter.
-unsigned int gblDutyCycleFlag = 0; // used to find the next duty cycle in timer0
-unsigned int gblCurrentDutyIndex = 0; // keeps track of the current duty cycle being used.
-
-// These two variables are for the NEWIR, IR commands in Cricket Logo
-// We replace the IR with the serial comm, of course.
-unsigned char gblMostRecentlyReceivedByte;
-int1 gblNewByteHasArrivedFlag = 0;
-
-
-int1 gblLogoIsRunning = 0;     // flags if logo procedures are runing
-int1 gblButtonPressed = 0;    // flags when the run button is pressed
-int1 gblBtn1AlreadyPressed = 0;
-unsigned int16 gblWaitCounter =0;  // used for the wait cmd in Logo vm
-
-unsigned int16 gblTimer = 0;   // This is the timer for the TIMER and RESETT commands
-
-int gblCmdTimeOut = 0; // counter to make sure the command state is not stuck somewhere
-
-int gblUsbBuffer[USB_BUFFER_SIZE];
-int gblUsbBufferPutIndex=0;
-int gblUsbBufferGetIndex=0;
-int gblUsbBufferIsFull=FALSE;
-
-int HILOWHasArrivedFlag = 0;
-int16 adressHILOW = 0;
-
-char gblFlashBuffer[getenv("FLASH_ERASE_SIZE")]; // buffer for flash write operations
-char gblFlashBufferPtr=0; // pointer with-in the flash buffer
-int16 gblFlashBaseAddress; // where the flash buffer shuld be written to in the flash mem
-int ttTimer0 = 0; 
-
-void version()
-{
-   printf(usb_cdc_putc,"4");
+void sendBytes(unsigned int16 memPtr, unsigned int16 count) {
+  while (count-- > 0){
+    printf(usb_cdc_putc,"%c",read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + memPtr++));
+  }
 }
 
 #int_rtcc
 void clock_isr() {
-   int i;
-   unsigned int minDuty;
-   unsigned int nextDutyIndex;
-   unsigned int periodTilNextInterrupt;
-   ttTimer0++;
-   if (ttTimer0 == 2){
-   ttTimer0 =0;
-   do {
+  int i;
+  unsigned int minDuty;
+  unsigned int nextDutyIndex;
+  unsigned int periodTilNextInterrupt;
+  ttTimer0++;
+  if (ttTimer0 == 2){
+    ttTimer0 =0;
+    do {
       if (gblTimer0Counter < MotorCount) {
-         if (getBit(gblMotorONOFF, gblCurrentDutyIndex) == ON) {
-            if (gblMtrDuty[gblCurrentDutyIndex] < 255) {
-               if (getBit(gblMotorMode, gblCurrentDutyIndex) == MOTOR_NORMAL) {
-                  if (getBit(gblMotorDir, gblCurrentDutyIndex))
-                     output_low(MotorCWPins[gblCurrentDutyIndex]);
-                  else
-                     output_low(MotorCCPins[gblCurrentDutyIndex]);
-               } else
-                  output_low(MotorCCPins[gblCurrentDutyIndex]);
+        if (getBit(gblMotorONOFF, gblCurrentDutyIndex) == ON) {
+          if (gblMtrDuty[gblCurrentDutyIndex] < 255) {
+            if (getBit(gblMotorMode, gblCurrentDutyIndex) == MOTOR_NORMAL) {
+              if (getBit(gblMotorDir, gblCurrentDutyIndex)){
+                output_low(MotorCWPins[gblCurrentDutyIndex]);
+              } else {
+                output_low(MotorCCPins[gblCurrentDutyIndex]);
+              }
+            } else {
+              output_low(MotorCCPins[gblCurrentDutyIndex]);
             }
-         }
+          }
+        }
       } else {
-         for (i=0 ; i<MotorCount ; i++) {
-            if (getBit(gblMotorONOFF, i) == ON) {
-               if (gblMtrDuty[i] > 0) {
-                  if (getBit(gblMotorMode, i) == MOTOR_NORMAL) {
-                     if (getBit(gblMotorDir, i))
-                        output_high(MotorCWPins[i]);
-                     else
-                        output_high(MotorCCPins[i]);
-                  } else
-                     output_high(MotorCCPins[i]);
-               }
+        for (i=0 ; i<MotorCount ; i++) {
+          if (getBit(gblMotorONOFF, i) == ON){
+            if (gblMtrDuty[i] > 0) {
+              if (getBit(gblMotorMode, i) == MOTOR_NORMAL) {
+                if (getBit(gblMotorDir, i)){
+                  output_high(MotorCWPins[i]);
+                } else {
+                  output_high(MotorCCPins[i]);
+                }
+              } else {
+                output_high(MotorCCPins[i]);
+              }
             }
-         }
+          }
+        }
       }
       minDuty = 255;
       for (i=0;i<=MotorCount;i++) {
-         if ((minDuty >= gblMtrDuty[i]) && !(getBit(gblDutyCycleFlag,i))) {
-            minDuty = gblMtrDuty[i];
-            nextDutyIndex = i;
-         }
+        if ((minDuty >= gblMtrDuty[i]) && !(getBit(gblDutyCycleFlag,i))) {
+          minDuty = gblMtrDuty[i];
+          nextDutyIndex = i;
+        }
       }
       setBit(&gblDutyCycleFlag, nextDutyIndex);
-      if (gblTimer0Counter < MotorCount)
-         periodTilNextInterrupt = minDuty - gblMtrDuty[gblCurrentDutyIndex];
-      else
-         periodTilNextInterrupt = minDuty;
+      if (gblTimer0Counter < MotorCount){
+        periodTilNextInterrupt = minDuty - gblMtrDuty[gblCurrentDutyIndex];
+      } else {
+        periodTilNextInterrupt = minDuty;
+      }
       gblCurrentDutyIndex = nextDutyIndex;
-      if (gblTimer0Counter == MotorCount-1)
-         gblDutyCycleFlag = 0;
-      if (gblTimer0Counter < MotorCount)
-         gblTimer0Counter++;
-      else
-         gblTimer0Counter = 0;
-   } while ((periodTilNextInterrupt == 0) && (gblTimer0Counter > 0));
-
-
-   if (gblTimer0Counter == 0) {
+      if (gblTimer0Counter == MotorCount-1){
+        gblDutyCycleFlag = 0;}
+      if (gblTimer0Counter < MotorCount){
+        gblTimer0Counter++;
+      } else {
+        gblTimer0Counter = 0;
+      }
+    } while ((periodTilNextInterrupt == 0) && (gblTimer0Counter > 0));
+    if (gblTimer0Counter == 0) {
       gblSlowBurstModeTimerHasTicked=1;
-   }
-}
-      set_rtcc(255-periodTilNextInterrupt);
+    }
+  }
+  set_rtcc(255-periodTilNextInterrupt);
 }
 
 #int_timer1
 void timer1ISR() {
-   gblTimer++;
-
-   if (CMD_STATE != WAITING_FOR_FIRST_HEADER) {
-      gblCmdTimeOut++;
-   }
-
-   if (gblWaitCounter > 0) {
-      gblWaitCounter--;
-   }
+  gblTimer++;
+  if (CMD_STATE != WAITING_FOR_FIRST_HEADER) {
+    gblCmdTimeOut++;
+  }
+  if (gblWaitCounter > 0) {
+    gblWaitCounter--;
+  }
 
    if (input(RUN_BUTTON)) {
       if (!gblBtn1AlreadyPressed) {
@@ -240,7 +128,7 @@ void timer1ISR() {
          if (!gblLogoIsRunning) {
             srand(gblTimer);
             output_high(RUN_LED);
-            //leitura da regiao onde começara o codigo logo
+            //leitura da regiao onde comecara o codigo logo
             gblMemPtr = (read_program_eeprom(RUN_BUTTON_BASE_ADDRESS)<<8)+read_program_eeprom(RUN_BUTTON_BASE_ADDRESS+2);
             gblMemPtr *= 2;
             clearStack();
@@ -254,7 +142,6 @@ void timer1ISR() {
    } else if (gblBtn1AlreadyPressed) {
       gblBtn1AlreadyPressed=0;
    }
-
    set_timer1(T1_COUNTER);
 }
 
@@ -272,11 +159,6 @@ void setBit(int *InByte, int BitNo) {
 void clearBit(int *InByte, int BitNo) {
    *InByte &= ~(1<<BitNo);
 }
-
-void TalkToMotor(int MotorBits) {
-   gblActiveMotors = MotorBits;
-}
-
 void MotorControl(int MotorCmd) {
    int i;
    for (i=0;i<MotorCount;i++) {
@@ -374,26 +256,18 @@ void ENHigh(int MotorNo) {
 void ENLow(int MotorNo) {
     int foo;
    output_low(MotorENPins[MotorNo]);
-    if(MotorNo%2)
-    {
+    if(MotorNo%2){
         foo=MotorNo-1;
-    }
-    else
-    {
+    }else{
         foo=MotorNo+1;
     }
-    if (!(getBit(gblMotorONOFF,foo)))
-    {
+    if (!(getBit(gblMotorONOFF,foo))){
         return;
     }
-    
-   if (MotorNo<2)
-    {
+   if (MotorNo<2){
       output_low(MOTOR_AB_EN);
         return;
-   } 
-    else
-    {
+   } else{
       output_low(MOTOR_CD_EN);
         return;
    }
@@ -401,7 +275,7 @@ void ENLow(int MotorNo) {
 
 
 void MotorON(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    if (getBit(gblMotorDir,MotorNo)) {
@@ -416,7 +290,7 @@ void MotorON(int MotorNo) {
 }
 
 void MotorOFF(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    output_high(MtrCC);
@@ -427,17 +301,14 @@ void MotorOFF(int MotorNo) {
 }
 
 void MotorRD(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
-   if (getBit(gblMotorDir,MotorNo))
-    {
+   if (getBit(gblMotorDir,MotorNo)){
         output_low(MtrCW);
       output_high(MtrCC);
         clearBit(&gblMotorDir,MotorNo);
-   }
-    else
-    {
+   }else{
         output_high(MtrCW);
       output_low(MtrCC);
       setBit(&gblMotorDir,MotorNo);
@@ -445,7 +316,7 @@ void MotorRD(int MotorNo) {
 }
 
 void MotorThisWay(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    setBit(&gblMotorDir,MotorNo);
@@ -455,7 +326,7 @@ void MotorThisWay(int MotorNo) {
 
 
 void MotorThatWay(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    clearBit(&gblMotorDir,MotorNo);
@@ -464,7 +335,7 @@ void MotorThatWay(int MotorNo) {
 }
 
 void MotorCoast(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    clearBit(&gblMotorONOFF,MotorNo);
@@ -476,9 +347,9 @@ void miscControl(int cur_param, int cur_ext, int cur_ext_byte) {
    switch (cur_param) {
       case MISC_USER_LED:
          if (cur_ext == TURN_USER_LED_ON) {
-            USER_LED_ON;
+            output_high(USER_LED);
          } else {
-            USER_LED_OFF;
+            output_low(USER_LED);
          }
          break;
       case MISC_BEEP:
@@ -510,13 +381,6 @@ void miscControl(int cur_param, int cur_ext, int cur_ext_byte) {
          break;
    }
 }
-void uLED_on() {
-   output_high(USER_LED);
-}
-void uLED_off() {
-   output_low(USER_LED);
-}
-
 void beep() {
    set_pwm1_duty(50);
    delay_ms(50);
@@ -545,29 +409,15 @@ void SetBurstMode(int SensorBits, int Mode) {
 }
 
 unsigned int16 readSensor(int sensorNo) {
-
    if (gblCurSensorChannel != sensorNo) {
-      switchAdcChannel(sensorNo);
+      set_adc_channel(sensorNo);
+	  delay_us(channelSwitchDelay);
       gblCurSensorChannel=sensorNo;
    }
-   return(getSensorVal());
+   return read_adc();
 }
 
-
-long getSensorVal() {
-   long sensorVal;
-   sensorVal=read_adc();
-   return (sensorVal);
-}
-
-
-void switchAdcChannel(int channelNo) {
-   set_adc_channel(channelNo);
-   delay_us(channelSwitchDelay);
-}
-
-
-byte readUsbBuffer(byte *charPtr) {
+int readUsbBuffer(int *charPtr) {
    int errorCode;
 
    if (gblUsbBufferIsFull == TRUE) {
@@ -593,33 +443,87 @@ byte readUsbBuffer(byte *charPtr) {
 
 
 void init_variables() {
-   gblBurstModeBits = 0;
-   CMD_STATE = WAITING_FOR_FIRST_HEADER;
-   gblLogoIsRunning=0;
-   gblStkPtr=0;
-   gblInputStkPtr=0;
-   gblErrFlag=0;
-   gblRecordPtr = read_program_eeprom(MEM_PTR_LOG_BASE_ADDRESS);
+  gblBurstModeBits = 0;
+  CMD_STATE = WAITING_FOR_FIRST_HEADER;
+  gblLogoIsRunning=0;
+  gblStkPtr=0;
+  gblInputStkPtr=0;
+  gblRecordPtr = read_program_eeprom(MEM_PTR_LOG_BASE_ADDRESS);
+  MotorENPins[0] = MTR1_EN;
+  MotorENPins[1] = MTR2_EN;
+  MotorENPins[2] = MTR3_EN;
+  MotorENPins[3] = MTR4_EN;
+  
+  MotorCWPins[0] = MTR1_CW;
+  MotorCWPins[1] = MTR2_CW;
+  MotorCWPins[2] = MTR3_CW;
+  MotorCWPins[3] = MTR4_CW;
+  
+  MotorCCPins[0] = MTR1_CC;
+  MotorCCPins[1] = MTR2_CC;
+  MotorCCPins[2] = MTR3_CC;
+  MotorCCPins[3] = MTR4_CC;
+  CMD_STATE = 0;
+  gbl_cur_cmd = 0;
+  gbl_cur_param= 0;
+  gbl_cur_ext= 0;
+  gbl_cur_ext_byte= 0;
+  gblBurstModeBits= 0;
+  gblBurstModeCounter=0;
+  gblSlowBurstMode=0;
+  gblSlowBurstModeTimerHasTicked=0;
+  gblCurSensorChannel = 0;
+  gblMotorMode=0;
+  gblActiveMotors= 0;
+  gblMotorDir=0;
+  gblMotorONOFF = 0;
+  gblTimer0Counter = MotorCount;
+  gblDutyCycleFlag = 0;
+  gblCurrentDutyIndex = 0; 
+  gblMostRecentlyReceivedByte = 0;
+  gblNewByteHasArrivedFlag = 0;
+  gblLogoIsRunning = 0;
+  gblButtonPressed = 0;
+  gblBtn1AlreadyPressed = 0;
+  gblWaitCounter =0;
+  gblTimer = 0;
+  gblCmdTimeOut = 0;
+  //gblUsbBuffer[USB_BUFFER_SIZE];
+  gblUsbBufferPutIndex=0;
+  gblUsbBufferGetIndex=0;
+  gblUsbBufferIsFull=FALSE;
+  HILOWHasArrivedFlag = 0;
+  adressHILOW = 0;
+  //gblFlashBuffer[getenv("FLASH_ERASE_SIZE")];
+  gblFlashBufferPtr=0;
+  gblFlashBaseAddress = 0;
+  ttTimer0 = 0;
+  
+  gblMtrDuty[0] = 0xff;
+  gblMtrDuty[1] = 0xff;
+  gblMtrDuty[2] = 0xff;
+  gblMtrDuty[3] = 0xff;
+  gblMtrDuty[4] = 0xff;
 }
 
 void intro() {
    set_pwm1_duty(50);
-   USER_LED_ON;
-   RUN_LED_ON;
+   output_high(USER_LED);
+   output_high(RUN_LED);
    delay_ms(50);
    set_pwm1_duty(0);
    delay_ms(50);
-   USER_LED_OFF;
-   RUN_LED_OFF;
+   output_low(USER_LED);
+   output_low(RUN_LED);
    set_pwm1_duty(50);
    delay_ms(50);
    set_pwm1_duty(0);
    delay_ms(0);
-   USER_LED_ON;
-   RUN_LED_ON;
+   output_high(USER_LED);
+   output_high(RUN_LED);
    delay_ms(100);
-   USER_LED_OFF;
-   RUN_LED_OFF;
+   output_low(USER_LED);
+   output_low(RUN_LED);
 }
 
 void Halt() {
@@ -635,7 +539,8 @@ void Halt() {
 
 void initBoard() {
    int i,j;
-   
+   output_low(PIN_C0);
+   output_low(PIN_C1);
    gblActiveMotors = 0;
    set_tris_a(PIC_TRIS_A);
    set_tris_b(PIC_TRIS_B);
@@ -709,10 +614,10 @@ void flashWrite(int16 InByte) {
 }
 
 void ProcessInput() {
-   byte InByte, buff_status;
+   int InByte, buff_status;
    int1 doNotStopRunningProcedure;
-
-   while ((buff_status = readUsbBuffer(&InByte)) == USB_SUCCESS) {
+   buff_status = readUsbBuffer(&InByte);
+   while (buff_status == USB_SUCCESS) {
       gblCmdTimeOut = 0 ;
       gblMostRecentlyReceivedByte = InByte;
       gblNewByteHasArrivedFlag = 1;
@@ -902,7 +807,7 @@ void main() {
               printf(usb_cdc_putc,"%c%c%c", 0x01, 0x30, 0x01);
               break;
             case CMD_Version:
-              version();
+              printf(usb_cdc_putc,"4");
               break;
             case CMD_READ_SENSOR:
               SensorVal = readSensor(gbl_cur_param);
@@ -917,7 +822,7 @@ void main() {
               printf(usb_cdc_putc,"%c%c%c", ReplyHeader1, ReplyHeader2, ACK_BYTE);
               break;
             case CMD_TALK_TO_MOTOR:
-              TalkToMotor(gbl_cur_ext_byte);
+              gblActiveMotors = gbl_cur_ext_byte;
               printf(usb_cdc_putc,"%c%c%c", ReplyHeader1, ReplyHeader2, ACK_BYTE);
               break;
             case CMD_BURST_MODE:
@@ -961,4 +866,4 @@ void main() {
    }
 }
 
-#include <logovm.c>
+

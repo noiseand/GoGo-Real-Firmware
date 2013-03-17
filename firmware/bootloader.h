@@ -7,7 +7,7 @@
 #device ADC=10 *=16
 #fuses HSPLL,NOWDT,NOPROTECT,USBDIV,PLL5,NODEBUG,CPUDIV1,VREGEN,NOLVP
 #use delay(clock=48000000)
-#use i2c(master, sda=PIN_B0, scl=PIN_B1, FORCE_HW)
+#use i2c(master, sda=PIN_B0, scl=PIN_B1, FORCE_HW,slow)
 
 #include <usb_cdc.h>
 
@@ -15,8 +15,6 @@
 #define RUN_BUTTON   PIN_D1
 #define RUN_LED      PIN_A4
 #define USER_LED     PIN_D0
-#define USER_LED2    PIN_C0
-#define USER_LED3    PIN_C1
 
 //================ GOGOUSB bootloader ===============================================//
 #define LOADER_SIZE        (0x183F)
