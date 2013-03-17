@@ -6,7 +6,7 @@ Processor_Text=PIC18F4550
 ToolSuite=CCS
 
 [Directories]
-Include=C:\Program Files\PICC\devices\;C:\Program Files\PICC\drivers\;C:\Program Files (x86)\PICC\drivers\;C:\Program Files (x86)\PICC\devices;
+Include=C:\Program Files (x86)\PICC\;C:\Program Files (x86)\PICC\drivers\;
 Library=
 LinkerScript=
 
@@ -33,9 +33,10 @@ AdditionalOptionString=
 
 [Opened Files]
 1=GoGoReal.c
-2=logovm.c
-3=
+2=GoGoReal_Variables.h
+3=GoGoReal.h
 4=
+5=
 [Units]
 Count=1
 1=GoGoReal.c

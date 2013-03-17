@@ -17,13 +17,20 @@
 * along with GoGo Real.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define STACK_SIZE      		32
-#define INPUT_STACK_SIZE		32
+#define STACK_SIZE            32
+#define INPUT_STACK_SIZE      32
+
 #define defaultPort      0
-#define channelSwitchDelay   50
+#define channelSwitchDelay   50   // delay time in us after switching adc channels
+// Don't decrease this value without testing.
+// If the delay is too short (i.e. 10us) the adc won't
+// have enough time to stabilize before reading the
+// next channel.
 #define T1_COUNTER      7287
 
-#define  CMD_TIMEOUT_PERIOD  2
+#define  CMD_TIMEOUT_PERIOD  2     // determins how long befor the board will reset
+// the command state. Units in 1/10 of a second
+
 #define CMD_PING         0x00
 #define CMD_READ_SENSOR      0x01
 #define CMD_MOTOR_CONTROL   0x02
@@ -67,16 +74,34 @@
 
 #define ON            1
 #define OFF            0
+
+// this is used in main(). Determinds how long to wait for the
+// second command byte.
 #define RETRY         100
+
+
+//  Sensor read modes
 #define NORMAL_READ  0
 #define MAX_READ     1
 #define MIN_READ     2
 #define MEAN_READ    3
+
+
+// this const defines the last command that is
+// one byte long. Please refer to the CMD bits
+// in the GoGo kit serial protocol
+
 #define ONE_BYTE_CMD   3
 
+
+/// How many motors does the board have.
 #define MotorCount      4
+
+/// Motor Modes
 #define MOTOR_NORMAL    0
 #define MOTOR_SERVO     1
+
+// Motor Pin Mappings
 
 #define MTR1_CW         PIN_B5
 #define MTR1_CC         PIN_B4
@@ -120,7 +145,6 @@
 #define USB_SUCCESS                  1
 #define USB_OVERFLOW                 2
 
-
 //////////////////////////////////////////////////
 //  Location of the run button vector.
 //  This is 0xff0 in the cricket. We map it to
@@ -157,7 +181,7 @@
 #define RECORD_BASE_ADDRESS      0x59C0
 
 
-
+// Logo VM state machine definition
 
 #define IDLE                     0
 
@@ -287,4 +311,21 @@
 #define CL_I2C_STOP           92
 #define CL_I2C_WRITE          93
 #define CL_I2C_READ           94
+
+
+
+
+/////////////////////////////////////////////////
+//   Global variables
+
+
+//int16 globalVariables[16]={0};
+
+//unsigned int16 gblRecordPtr; // pointer to the current location in the data eeprom
+// it will be initiazlied to the most recent record location
+// in init_variables()
+
+//unsigned int16  gblMemPtr,     // FLASH/EEPROM pointer
+//gblRWCount;    // Read/Write length
+
 

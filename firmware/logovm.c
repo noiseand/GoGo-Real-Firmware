@@ -15,41 +15,44 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with GoGo Real.  If not, see <http://www.gnu.org/licenses/>.
-
-* Copyright (C) 2001-2007 Massachusetts Institute of Technology
-* Contact   Arnan (Roger) Sipiatkiat [arnans@gmail.com]
-
 */
 
 void stkPush(unsigned int16 stackItem) {
-	if (gblStkPtr<STACK_SIZE) {
-		gblStack[gblStkPtr] = stackItem;
-		gblStkPtr++;
-	}
+
+   if (gblStkPtr<STACK_SIZE) {
+      gblStack[gblStkPtr] = stackItem;
+    gblStkPtr++;
+   }
 }
 
 unsigned int16 stkPop() {
-  if (gblStkPtr>0) {
-	gblStkPtr--;
+   if (gblStkPtr>0) {
+    gblStkPtr--;
     int16 stackItemstkPop = gblStack[gblStkPtr];
-	return stackItemstkPop;
-  }
+      return stackItemstkPop;
+   }
 }
 
 void inputPush(unsigned int16 stackItem) {
-	if (gblInputStkPtr<INPUT_STACK_SIZE) {
-		gblInputStack[gblInputStkPtr++] = stackItem;
-	}
+   if (gblInputStkPtr<INPUT_STACK_SIZE) {
+      gblInputStack[gblInputStkPtr++] = stackItem;
+   }
 }
 
 unsigned int16 inputPop(void) {
-	if (gblInputStkPtr>0) {
-		return(gblInputStack[--gblInputStkPtr]);
-	}
+   if (gblInputStkPtr>0) {
+      return(gblInputStack[--gblInputStkPtr]);
+   }
 }
 
 void clearStack() {
-	gblStkPtr=gblInputStkPtr=0;
+   gblStkPtr=gblInputStkPtr=0;
+}
+
+void sendBytes(unsigned int16 memPtr, unsigned int16 count) {
+	while (count-- > 0)
+		printf(usb_cdc_putc,"%c",read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + memPtr++));
+
 }
 
 
@@ -62,8 +65,10 @@ unsigned int16 fetchNextOpcode() {
 		opcode = read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
 		gblMemPtr+=2;
 	}
+
 	return opcode;
 }
+
 
 void evalOpcode(unsigned char opcode) {
   int i;
@@ -387,28 +392,30 @@ void evalOpcode(unsigned char opcode) {
     case M_ABCD:
       gblActiveMotors = 15;
       break;
-      // Look at how M_ON, M_ONFOR, and M_OFF work carefully.
-      // - M_ON, M_ONFOR starts by turning motors on.
-      // - M_ON breaks right after while M_ONFOR continues.
     case M_OFF:
-      i++;
+      MotorControl(MTR_OFF);
+	  break;
     case M_THATWAY:
-      i++;
+      MotorControl(MTR_THATWAY);
+	  break;
     case M_THISWAY:
-      i++;
+      MotorControl(MTR_THISWAY);
+	  break;
     case M_RD:
-      i++;
+      MotorControl(MTR_RD);
+	  break;
     case BRAKE:
-      i++;
+      MotorControl(MTR_COAST);
+	  break;
     case M_ON:
+	  MotorControl(MTR_ON);
+	  break;
     case M_ONFOR:
       MotorControl(i);
-      if (opcode == M_ONFOR) {
-        gblWaitCounter = stkPop()*2; // the main() loop will pause until
-        // gblWaitCounter is 0. Timer1 ISR
-        // subtracts its value every 0.1 sec.
-        gblONFORNeedsToFinish = 1; // this will cause fetchNextOpcode()
-      }
+      gblWaitCounter = stkPop()*2; // the main() loop will pause until
+      // gblWaitCounter is 0. Timer1 ISR
+      // subtracts its value every 0.1 sec.
+      gblONFORNeedsToFinish = 1; // this will cause fetchNextOpcode()
       break;
     case SETPOWER:
       SetMotorPower(stkPop());

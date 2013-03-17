@@ -1,30 +1,27 @@
-//
-// Copyright (C) 2001-2007 Massachusetts Institute of Technology
-// Contact   Arnan (Roger) Sipiatkiat [arnans@gmail.com]
-
-//************************* GOGO BR  *******************************************//
-//*****  contact  Felipe Augusto Silva  *****************************************//
-//*****  email:  fel1310@hotmail.com   *****************************************//
-//******************************************************************************//
-
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation version 2.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+/* Copyright (C) 2010-2012 Lucas Aníbal Tanure Alves - ME
+* Contact: Lucas Tanure [lucastanure@gogoreal.com.br]
+*   
+* This file is part of GoGo Real.
+*
+* GoGo Real is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* GoGo Real is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with GoGo Real.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #case
 #include "bootloader.h"
-#include <stdlib.H>
-#include <GoGoReal_Defines.H>
+#include <GoGoReal_Defines.h>
 #include <GoGoReal_Variables.h>
 #include <GoGoReal.h>
+#include <stdlib.H>
 #include <logovm.c>
 
 #use fast_io(A)
@@ -33,91 +30,83 @@
 #use fast_io(D)
 #use fast_io(E)
 
-void sendBytes(unsigned int16 memPtr, unsigned int16 count) {
-  while (count-- > 0){
-    printf(usb_cdc_putc,"%c",read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + memPtr++));
-  }
-}
-
 #int_rtcc
 void clock_isr() {
-  int i;
-  unsigned int minDuty;
-  unsigned int nextDutyIndex;
-  unsigned int periodTilNextInterrupt;
-  ttTimer0++;
-  if (ttTimer0 == 2){
-    ttTimer0 =0;
-    do {
+   int i;
+   unsigned int minDuty;
+   unsigned int nextDutyIndex;
+   unsigned int periodTilNextInterrupt;
+   ttTimer0++;
+   if (ttTimer0 == 2){
+   ttTimer0 =0;
+   do {
       if (gblTimer0Counter < MotorCount) {
-        if (getBit(gblMotorONOFF, gblCurrentDutyIndex) == ON) {
-          if (gblMtrDuty[gblCurrentDutyIndex] < 255) {
-            if (getBit(gblMotorMode, gblCurrentDutyIndex) == MOTOR_NORMAL) {
-              if (getBit(gblMotorDir, gblCurrentDutyIndex)){
-                output_low(MotorCWPins[gblCurrentDutyIndex]);
-              } else {
-                output_low(MotorCCPins[gblCurrentDutyIndex]);
-              }
-            } else {
-              output_low(MotorCCPins[gblCurrentDutyIndex]);
+         if (getBit(gblMotorONOFF, gblCurrentDutyIndex) == ON) {
+            if (gblMtrDuty[gblCurrentDutyIndex] < 255) {
+               if (getBit(gblMotorMode, gblCurrentDutyIndex) == MOTOR_NORMAL) {
+                  if (getBit(gblMotorDir, gblCurrentDutyIndex))
+                     output_low(MotorCWPins[gblCurrentDutyIndex]);
+                  else
+                     output_low(MotorCCPins[gblCurrentDutyIndex]);
+               } else
+                  output_low(MotorCCPins[gblCurrentDutyIndex]);
             }
-          }
-        }
+         }
       } else {
-        for (i=0 ; i<MotorCount ; i++) {
-          if (getBit(gblMotorONOFF, i) == ON){
-            if (gblMtrDuty[i] > 0) {
-              if (getBit(gblMotorMode, i) == MOTOR_NORMAL) {
-                if (getBit(gblMotorDir, i)){
-                  output_high(MotorCWPins[i]);
-                } else {
-                  output_high(MotorCCPins[i]);
-                }
-              } else {
-                output_high(MotorCCPins[i]);
-              }
+         for (i=0 ; i<MotorCount ; i++) {
+            if (getBit(gblMotorONOFF, i) == ON) {
+               if (gblMtrDuty[i] > 0) {
+                  if (getBit(gblMotorMode, i) == MOTOR_NORMAL) {
+                     if (getBit(gblMotorDir, i))
+                        output_high(MotorCWPins[i]);
+                     else
+                        output_high(MotorCCPins[i]);
+                  } else
+                     output_high(MotorCCPins[i]);
+               }
             }
-          }
-        }
+         }
       }
       minDuty = 255;
       for (i=0;i<=MotorCount;i++) {
-        if ((minDuty >= gblMtrDuty[i]) && !(getBit(gblDutyCycleFlag,i))) {
-          minDuty = gblMtrDuty[i];
-          nextDutyIndex = i;
-        }
+         if ((minDuty >= gblMtrDuty[i]) && !(getBit(gblDutyCycleFlag,i))) {
+            minDuty = gblMtrDuty[i];
+            nextDutyIndex = i;
+         }
       }
       setBit(&gblDutyCycleFlag, nextDutyIndex);
-      if (gblTimer0Counter < MotorCount){
-        periodTilNextInterrupt = minDuty - gblMtrDuty[gblCurrentDutyIndex];
-      } else {
-        periodTilNextInterrupt = minDuty;
-      }
+      if (gblTimer0Counter < MotorCount)
+         periodTilNextInterrupt = minDuty - gblMtrDuty[gblCurrentDutyIndex];
+      else
+         periodTilNextInterrupt = minDuty;
       gblCurrentDutyIndex = nextDutyIndex;
-      if (gblTimer0Counter == MotorCount-1){
-        gblDutyCycleFlag = 0;}
-      if (gblTimer0Counter < MotorCount){
-        gblTimer0Counter++;
-      } else {
-        gblTimer0Counter = 0;
-      }
-    } while ((periodTilNextInterrupt == 0) && (gblTimer0Counter > 0));
-    if (gblTimer0Counter == 0) {
+      if (gblTimer0Counter == MotorCount-1)
+         gblDutyCycleFlag = 0;
+      if (gblTimer0Counter < MotorCount)
+         gblTimer0Counter++;
+      else
+         gblTimer0Counter = 0;
+   } while ((periodTilNextInterrupt == 0) && (gblTimer0Counter > 0));
+
+
+   if (gblTimer0Counter == 0) {
       gblSlowBurstModeTimerHasTicked=1;
-    }
-  }
-  set_rtcc(255-periodTilNextInterrupt);
+   }
+}
+      set_rtcc(255-periodTilNextInterrupt);
 }
 
 #int_timer1
 void timer1ISR() {
-  gblTimer++;
-  if (CMD_STATE != WAITING_FOR_FIRST_HEADER) {
-    gblCmdTimeOut++;
-  }
-  if (gblWaitCounter > 0) {
-    gblWaitCounter--;
-  }
+   gblTimer++;
+
+   if (CMD_STATE != WAITING_FOR_FIRST_HEADER) {
+      gblCmdTimeOut++;
+   }
+
+   if (gblWaitCounter > 0) {
+      gblWaitCounter--;
+   }
 
    if (input(RUN_BUTTON)) {
       if (!gblBtn1AlreadyPressed) {
@@ -159,6 +148,7 @@ void setBit(int *InByte, int BitNo) {
 void clearBit(int *InByte, int BitNo) {
    *InByte &= ~(1<<BitNo);
 }
+
 void MotorControl(int MotorCmd) {
    int i;
    for (i=0;i<MotorCount;i++) {
@@ -417,7 +407,8 @@ unsigned int16 readSensor(int sensorNo) {
    return read_adc();
 }
 
-int readUsbBuffer(int *charPtr) {
+
+char readUsbBuffer(char *charPtr) {
    int errorCode;
 
    if (gblUsbBufferIsFull == TRUE) {
@@ -616,8 +607,8 @@ void flashWrite(int16 InByte) {
 void ProcessInput() {
    int InByte, buff_status;
    int1 doNotStopRunningProcedure;
-   buff_status = readUsbBuffer(&InByte);
-   while (buff_status == USB_SUCCESS) {
+
+   while ((buff_status = readUsbBuffer(&InByte)) == USB_SUCCESS) {
       gblCmdTimeOut = 0 ;
       gblMostRecentlyReceivedByte = InByte;
       gblNewByteHasArrivedFlag = 1;
@@ -805,9 +796,6 @@ void main() {
             case CMD_PING:
               printf(usb_cdc_putc,"%c%c%c", ReplyHeader1, ReplyHeader2, ACK_BYTE);
               printf(usb_cdc_putc,"%c%c%c", 0x01, 0x30, 0x01);
-              break;
-            case CMD_Version:
-              printf(usb_cdc_putc,"4");
               break;
             case CMD_READ_SENSOR:
               SensorVal = readSensor(gbl_cur_param);
