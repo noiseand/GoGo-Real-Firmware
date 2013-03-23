@@ -17,6 +17,37 @@
 * along with GoGo Real.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+void clearStack();
+void stkPush(unsigned int16 stackItem);
+unsigned int16 stkPop();
+void inputPush(unsigned int16 stackItem);
+unsigned int16 inputPop(void);
+void MotorON(int MotorNo);
+void MotorOFF(int MotorNo);
+void MotorRD(unsigned int8 MotorNo);
+void MotorThisWay(int MotorNo);
+void MotorThatWay(int MotorNo);
+void motorControl_TurnOff();
+void chip_enable_off();
+void SetMotorMode(int MotorNo, int motorMode);
+int motorMode(int MotorNo);
+void motorPower(int MotorNo, int power) ;
+void MotorControl(int MotorCmd);
+unsigned int16 readSensor(int sensorNo);
+void init_board();
+void init_variables();
+
+unsigned int8 readUsbBuffer(unsigned int8 *charPtr);
+void processCommunication();
+void updateUsbBuffer();
+
+/*
+######################################################################
+*/
+
+
+
+
 void setHigh(int16 Pin);
 void setLow(int16 Pin);
 int  readPin(int16 Pin);
@@ -35,7 +66,7 @@ void MotorThisWay(int MotorNo);
 void MotorThatWay(int MotorNo);
 void MotorCoast(int MotorNo);
 void miscControl(int cur_param, int cur_ext, int cur_ext_byte);
-void beep();
+void play_music();
 void SetBurstMode(int SensorBits, int Mode);
 void DoSensorStuff();
 unsigned int16 readSensor(int sensorNo);

@@ -17,56 +17,60 @@
 * along with GoGo Real.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-void stkPush(unsigned int16 stackItem) {
 
-   if (gblStkPtr<STACK_SIZE) {
-      gblStack[gblStkPtr] = stackItem;
-    gblStkPtr++;
-   }
+void clearStack() {
+   stkPointer=inputStkPointer=0;
+}
+
+void stkPush(unsigned int16 stackItem) {
+  if (stkPointer<max_stack_size) {
+    stack[stkPointer] = stackItem;
+    stkPointer++;
+  }
 }
 
 unsigned int16 stkPop() {
-   if (gblStkPtr>0) {
-    gblStkPtr--;
-    int16 stackItemstkPop = gblStack[gblStkPtr];
-      return stackItemstkPop;
+  if (stkPointer>0) {
+    stkPointer--;
+    return stack[stkPointer];
    }
 }
 
 void inputPush(unsigned int16 stackItem) {
-   if (gblInputStkPtr<INPUT_STACK_SIZE) {
-      gblInputStack[gblInputStkPtr++] = stackItem;
+   if (inputStkPointer<max_stack_size) {
+      inputStack[inputStkPointer++] = stackItem;
    }
 }
 
 unsigned int16 inputPop(void) {
-   if (gblInputStkPtr>0) {
-      return(gblInputStack[--gblInputStkPtr]);
-   }
+  if (inputStkPointer>0) {
+    inputStkPointer--;
+    return(inputStack[inputStkPointer]);
+  }
 }
 
-void clearStack() {
-   gblStkPtr=gblInputStkPtr=0;
-}
+/*
+######################################################################
+*/
 
 void sendBytes(unsigned int16 memPtr, unsigned int16 count) {
-	while (count-- > 0)
-		printf(usb_cdc_putc,"%c",read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + memPtr++));
+   while (count-- > 0)
+      printf(usb_cdc_putc,"%c",read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + memPtr++));
 
 }
 
 
 unsigned int16 fetchNextOpcode() {
-	unsigned int16 opcode;
-	if (gblONFORNeedsToFinish) {
-		gblONFORNeedsToFinish = 0;
-		return(M_OFF);
-	} else {
-		opcode = read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
-		gblMemPtr+=2;
-	}
+   unsigned int16 opcode;
+   if (gblONFORNeedsToFinish) {
+      gblONFORNeedsToFinish = 0;
+      return(M_OFF);
+   } else {
+      opcode = read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
+      gblMemPtr+=2;
+   }
 
-	return opcode;
+   return opcode;
 }
 
 
@@ -223,7 +227,7 @@ void evalOpcode(unsigned char opcode) {
       }
       break;
     case BEEP:
-      beep();
+      play_music();
       break;
     case NOTE:
       break;
@@ -394,22 +398,22 @@ void evalOpcode(unsigned char opcode) {
       break;
     case M_OFF:
       MotorControl(MTR_OFF);
-	  break;
+     break;
     case M_THATWAY:
       MotorControl(MTR_THATWAY);
-	  break;
+     break;
     case M_THISWAY:
       MotorControl(MTR_THISWAY);
-	  break;
+     break;
     case M_RD:
       MotorControl(MTR_RD);
-	  break;
+     break;
     case BRAKE:
       MotorControl(MTR_COAST);
-	  break;
+     break;
     case M_ON:
-	  MotorControl(MTR_ON);
-	  break;
+     MotorControl(MTR_ON);
+     break;
     case M_ONFOR:
       MotorControl(i);
       gblWaitCounter = stkPop()*2; // the main() loop will pause until

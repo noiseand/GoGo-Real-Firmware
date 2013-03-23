@@ -17,16 +17,57 @@
 * along with GoGo Real.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//motors
+#define m0 0
+#define m1 1
+#define m2 2
+#define m3 3
+#define servo_mode 0 
+#define dc_mode 1
+#define stepper_mode 2
+
+#define MotorCount      4
+#define T0_COUNTER      64937
+#define max_number_interrupts 400 // 400 * 0.05ms == 20ms
+
+#define MOTOR_AB_EN     PIN_B7
+#define MOTOR_CD_EN     PIN_D6
+#define m0_enb         PIN_B6
+#define m1_enb         PIN_B3
+#define m2_enb         PIN_D5
+#define m3_enb         PIN_D2
+#define m0_gnd         PIN_B5
+#define m0_high        PIN_B4
+#define m1_gnd         PIN_B2
+#define m1_high        PIN_D7
+#define m2_gnd         PIN_D4
+#define m2_high        PIN_D3
+#define m3_gnd         PIN_C6
+#define m3_high        PIN_C7
+
+//time
+#define T1_COUNTER      5535 // 10 ms
+#define min_time_pressing_button_ms 500//ms
+
+//sensor
+#define min_time_change_sensor 100
+
+//statck
+#define max_stack_size 32
+
+//usb 
+#define usb_buffer_max_size 32
+
+/*
+######################################################################
+*/
+
 #define STACK_SIZE            32
 #define INPUT_STACK_SIZE      32
 
 #define defaultPort      0
-#define channelSwitchDelay   50   // delay time in us after switching adc channels
-// Don't decrease this value without testing.
-// If the delay is too short (i.e. 10us) the adc won't
-// have enough time to stabilize before reading the
-// next channel.
-#define T1_COUNTER      7287
+#define channelSwitchDelay   50
+
 
 #define  CMD_TIMEOUT_PERIOD  2     // determins how long befor the board will reset
 // the command state. Units in 1/10 of a second
@@ -95,7 +136,7 @@
 
 
 /// How many motors does the board have.
-#define MotorCount      4
+
 
 /// Motor Modes
 #define MOTOR_NORMAL    0
@@ -103,31 +144,12 @@
 
 // Motor Pin Mappings
 
-#define MTR1_CW         PIN_B5
-#define MTR1_CC         PIN_B4
-#define MTR1_EN         PIN_B6
-
-#define MTR2_CW         PIN_B2
-#define MTR2_CC         PIN_D7
-#define MTR2_EN         PIN_B3
-
-#define MTR3_CW         PIN_D4
-#define MTR3_CC         PIN_D3
-#define MTR3_EN         PIN_D5
-
-#define MTR4_CW         PIN_C6
-#define MTR4_CC         PIN_C7
-#define MTR4_EN         PIN_D2
-
 #define PIC_TRIS_B   0b00000011
 #define PIC_TRIS_A   0b00101111
 #define PIC_TRIS_C   0b00000000
 #define PIC_TRIS_D   0b00000010
 #define PIC_TRIS_E   0b00000111
 
-
-#define MOTOR_AB_EN     PIN_B7
-#define MOTOR_CD_EN     PIN_D6
 
 #define WAITING_FOR_FIRST_HEADER   1
 #define WAITING_FOR_SECOND_HEADER   2
