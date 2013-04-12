@@ -1,3 +1,6 @@
+#ext4
+.directory
+
 # Object files
 *.o
 
@@ -15,3 +18,9 @@
 *.exe
 *.out
 *.app
+
+#Ccs Files
+*.err
+*esym
+*.sym
+*.cod
