@@ -31,19 +31,29 @@ void motorControl_TurnOff();
 void chip_enable_off();
 void SetMotorMode(int MotorNo, int motorMode);
 int motorMode(int MotorNo);
-void motorPower(int MotorNo, int power) ;
-void MotorControl(int MotorCmd);
+void MotorControl(int MotorCmd, int power);
 unsigned int16 readSensor(int sensorNo);
 void init_board();
 void init_variables();
 
-unsigned int8 readUsbBuffer(unsigned int8 *charPtr);
+unsigned int8 readUsbBuffer();
 void processCommunication();
 void updateUsbBuffer();
 
 /*
-######################################################################
+To  compile
 */
+
+void flashSetWordAddress(int16 address);
+
+void flashFlushBuffer();
+
+void flashWrite(int16 InByte);
+
+
+/*
+######################################################################
+
 
 
 
@@ -90,3 +100,5 @@ unsigned int16 inputPop(void);
 unsigned int16 stkPop(void);
 void clearStack();
 unsigned int16 fetchNextOpcode();
+
+*/

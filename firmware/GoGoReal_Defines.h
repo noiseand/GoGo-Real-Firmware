@@ -22,9 +22,9 @@
 #define m1 1
 #define m2 2
 #define m3 3
-#define servo_mode 0 
-#define dc_mode 1
-#define stepper_mode 2
+#define SERVO 0 
+#define DC 1
+#define STEPPER 2
 
 #define MotorCount      4
 #define T0_COUNTER      64937
@@ -58,25 +58,28 @@
 //usb 
 #define usb_buffer_max_size 32
 
+//Commands
+#define CMD_VERSION     0
+#define CMD_LEDON       1
+#define CMD_LEDOFF      2
+#define CMD_READSENSOR  3
+
+#define CMD_MOTORS_BASE    64
+#define CMD_ACTIVATEMOTORS 64
+#define CMD_MOTORS_ON      65
+#define CMD_MOTORS_OFF     66
+#define CMD_MOTORS_REVERT  67
+#define CMD_MOTORS_THISWAY 68
+#define CMD_MOTORS_THATWAY 69
+#define CMD_MOTORS_POWER   70
+#define CMD_MOTORS_ANGLE   71
+
 /*
 ######################################################################
 */
-
-#define STACK_SIZE            32
-#define INPUT_STACK_SIZE      32
-
-#define defaultPort      0
-#define channelSwitchDelay   50
-
-
-#define  CMD_TIMEOUT_PERIOD  2     // determins how long befor the board will reset
-// the command state. Units in 1/10 of a second
-
-#define CMD_PING         0x00
 #define CMD_READ_SENSOR      0x01
 #define CMD_MOTOR_CONTROL   0x02
-#define CMD_MOTOR_POWER      0x03
-#define CMD_TALK_TO_MOTOR   0x04
+
 #define CMD_BURST_MODE      0x05
 #define CMD_MISC_CONTROL   0x06
 #define CMD_Version         0x07
@@ -96,25 +99,11 @@
 #define I2C_WRITE  2
 #define I2C_READ   3
 
-#define MTR_ON       0
-#define MTR_OFF      1
-#define MTR_RD       2
-#define MTR_THISWAY  3
-#define MTR_THATWAY  4
-#define MTR_COAST    5
 
 
-#define ACK_BYTE       0b10101010   // 0xAA
-#define InHeader1       0x54
-#define InHeader2       0xfe
-#define ReplyHeader1    0x55
-#define ReplyHeader2    0xff
 
 #define EEPROMuploadHeader1   0xEE
 #define EEPROMuploadHeader2   0x11
-
-#define ON            1
-#define OFF            0
 
 // this is used in main(). Determinds how long to wait for the
 // second command byte.
@@ -134,23 +123,6 @@
 
 #define ONE_BYTE_CMD   3
 
-
-/// How many motors does the board have.
-
-
-/// Motor Modes
-#define MOTOR_NORMAL    0
-#define MOTOR_SERVO     1
-
-// Motor Pin Mappings
-
-#define PIC_TRIS_B   0b00000011
-#define PIC_TRIS_A   0b00101111
-#define PIC_TRIS_C   0b00000000
-#define PIC_TRIS_D   0b00000010
-#define PIC_TRIS_E   0b00000111
-
-
 #define WAITING_FOR_FIRST_HEADER   1
 #define WAITING_FOR_SECOND_HEADER   2
 #define WAITING_FOR_CMD_BYTE      3
@@ -160,12 +132,6 @@
 #define LOCAL              0
 #define REMOTE             1
 
-
-#define USB_BUFFER_SIZE 20
-
-#define USB_NO_DATA                  0
-#define USB_SUCCESS                  1
-#define USB_OVERFLOW                 2
 
 //////////////////////////////////////////////////
 //  Location of the run button vector.
@@ -333,21 +299,5 @@
 #define CL_I2C_STOP           92
 #define CL_I2C_WRITE          93
 #define CL_I2C_READ           94
-
-
-
-
-/////////////////////////////////////////////////
-//   Global variables
-
-
-//int16 globalVariables[16]={0};
-
-//unsigned int16 gblRecordPtr; // pointer to the current location in the data eeprom
-// it will be initiazlied to the most recent record location
-// in init_variables()
-
-//unsigned int16  gblMemPtr,     // FLASH/EEPROM pointer
-//gblRWCount;    // Read/Write length
 
 

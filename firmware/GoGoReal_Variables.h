@@ -58,15 +58,14 @@ unsigned int16 time_pressing_button_ms; //0
 /*
 ######################################################################
 
-
+*/
 
 int   gblInputStkPtr;
-unsigned int16 gblStack[STACK_SIZE];
+unsigned int16 gblStack[32];
 int gblStkPtr;
 int16 globalVariables[16]={0};
 unsigned int16 gblRecordPtr;
 unsigned int16  gblMemPtr, gblRWCount;
-
 unsigned int CMD_STATE;
 int gbl_cur_cmd, gbl_cur_param, gbl_cur_ext, gbl_cur_ext_byte;
 int gblBurstModeBits;
@@ -90,7 +89,7 @@ int1 gblBtn1AlreadyPressed;
 unsigned int16 gblWaitCounter;
 unsigned int16 gblTimer;
 int gblCmdTimeOut;
-int gblUsbBuffer[USB_BUFFER_SIZE];
+int gblUsbBuffer[32];
 int gblUsbBufferPutIndex;
 int gblUsbBufferGetIndex;
 int gblUsbBufferIsFull=FALSE;
@@ -102,4 +101,3 @@ int16 gblFlashBaseAddress;
 int16 gblLoopAddress=0;
 int16 gblRepeatCount=0;
 int1 gblONFORNeedsToFinish=0;
-*/

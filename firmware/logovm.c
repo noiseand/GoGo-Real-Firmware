@@ -102,10 +102,10 @@ void evalOpcode(unsigned char opcode) {
      for (i=0 ; i<opr1 ; i++) {
        inputPush(stkPop());
      }
-     inputPush(gblStkPtr);   // save the data stack pointer (we use this with STOP opcode to clear the
+     inputPush(stkPointer);   // save the data stack pointer (we use this with STOP opcode to clear the
     // data stack of the current procedure.
     inputPush(genPurpose);  // save the return address
-    inputPush(gblInputStkPtr - (opr1+2));   // pushes a proc input base address index.
+    inputPush(inputStkPointer - (opr1+2));   // pushes a proc input base address index.
     // you'll need to read the documentation
     // to fully understand why. Meanwhile, see how it
     // is used in case LTHING
@@ -167,7 +167,7 @@ void evalOpcode(unsigned char opcode) {
       genPurpose = 2*fetchNextOpcode();  // index of the input variable
       opr1 = inputPop();  // base address in the input stack
       inputPush(opr1);    // push the base address back to the stack.
-      stkPush(gblInputStack[opr1 + genPurpose]);
+      stkPush(inputStack[opr1 + genPurpose]);
       break;
       // return to the parent procedure
     case STOP:
@@ -227,7 +227,7 @@ void evalOpcode(unsigned char opcode) {
       }
       break;
     case BEEP:
-      play_music();
+      //play_music();
       break;
     case NOTE:
       break;
@@ -397,32 +397,34 @@ void evalOpcode(unsigned char opcode) {
       gblActiveMotors = 15;
       break;
     case M_OFF:
-      MotorControl(MTR_OFF);
+      MotorControl(M_OFF,0);
      break;
     case M_THATWAY:
-      MotorControl(MTR_THATWAY);
+      MotorControl(M_THATWAY,0);
      break;
     case M_THISWAY:
-      MotorControl(MTR_THISWAY);
+      MotorControl(M_THISWAY,0);
      break;
     case M_RD:
-      MotorControl(MTR_RD);
+      MotorControl(M_RD,0);
      break;
     case BRAKE:
-      MotorControl(MTR_COAST);
+      MotorControl(M_OFF,0);//M_COAST);
      break;
     case M_ON:
-     MotorControl(MTR_ON);
+     MotorControl(M_ON,0);
      break;
     case M_ONFOR:
-      MotorControl(i);
+      MotorControl(i,0);
       gblWaitCounter = stkPop()*2; // the main() loop will pause until
       // gblWaitCounter is 0. Timer1 ISR
       // subtracts its value every 0.1 sec.
       gblONFORNeedsToFinish = 1; // this will cause fetchNextOpcode()
       break;
     case SETPOWER:
-      SetMotorPower(stkPop());
+      //SetMotorPower(stkPop());
+      //motor_intrp_count[iterator] = stkPop()*4;  is not iterator
+      MotorControl(CMD_MOTORS_POWER,stkPop());
       break;
     case REALLY_STOP:
       gblLogoIsRunning = 0;
@@ -488,16 +490,17 @@ void evalOpcode(unsigned char opcode) {
     case SERVO_RT:
       // Caution: SetMotorMode() must be called AFTER the
       // MotorControl() commands
-      MotorControl(MTR_ON);
-      MotorControl(MTR_THISWAY);
-      SetMotorMode(MOTOR_SERVO);
+      MotorControl(M_ON,0);
+      MotorControl(M_THISWAY,0);
+      SetMotorMode(1,SERVO); // crap
       i = stkPop();
       if (opcode == SERVO_SET_H) {
-        SetMotorPower(i);
+        //SetMotorPower(i);
+        MotorControl(CMD_MOTORS_POWER,i);
       } else if (opcode == SERVO_LT){
-        ChangeMotorPower(i);
+        //ChangeMotorPower(i);
       } else{
-        ChangeMotorPower(-1*i);
+        //ChangeMotorPower(-1*i);
       }
       break;
     case TALK_TO_MOTOR:
@@ -516,7 +519,7 @@ void evalOpcode(unsigned char opcode) {
       stkPush(i2c_read(stkPop()));
       break;
     default:
-     Halt();
+     //Halt();
     };
 }
 

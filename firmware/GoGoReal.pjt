@@ -34,9 +34,10 @@ AdditionalOptionString=
 [Opened Files]
 1=GoGoReal.c
 2=GoGoReal_Defines.h
-3=
-4=
-5=
+3=GoGoReal.h
+4=logovm.c
+5=GoGoReal_Variables.h
+6=
 [Units]
 Count=1
 1=GoGoReal.c

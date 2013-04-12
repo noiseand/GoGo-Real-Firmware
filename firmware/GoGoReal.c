@@ -113,18 +113,20 @@ void chip_enable_off(){
   }
 }
 
-void SetMotorMode(int MotorNo, int motorMode) {
-  if(motorMode == servo_mode){ // 00
+void SetMotorMode(int MotorNo, int mode) {
+  if(mode == SERVO){ // 00
     motorsMode &= ~(1<<(MotorNo*2));
     motorsMode &= ~(1<<((MotorNo*2)+1));
+    MotorThisWay(MotorNo);
+    MotorON(MotorNo);
     return;
   }
-  if(motorMode == dc_mode){ // 01
+  if(mode == DC){ // 01
     motorsMode |= (1<<(MotorNo*2));
     motorsMode &= ~(1<<((MotorNo*2)+1));
     return;
   }
-  if(motorMode == stepper_mode){ //10
+  if(mode == STEPPER){ //10
     motorsMode &= ~(1<<(MotorNo*2));
     motorsMode |= (1<<((MotorNo*2)+1));
     return;
@@ -133,52 +135,47 @@ void SetMotorMode(int MotorNo, int motorMode) {
 
 int motorMode(int MotorNo) {
   if((motorsMode >> ((MotorNo*2)+1)) & 1){
-    return stepper_mode;
+    return STEPPER;
   }
   if((motorsMode >> (MotorNo*2)) & 1){
-    return dc_mode;
+    return DC;
   }
-  return servo_mode;
-}
-
-void motorPower(int MotorNo, int power) {
-  if (motorMode(MotorNo) == dc_mode){
-    power *= 4;
-  }
-  if (motorMode(MotorNo) == servo_mode){
-    if(power > 40){
-      return;
-    }
-  }
-  motor_intrp_count[MotorNo] = power;
+  return SERVO;
 }
 
 //TODO
-void MotorControl(int MotorCmd) {
-   for (iterator=0;iterator<MotorCount;iterator++) {
-      if ((motorsActive >> iterator) & 1) {
-         switch (MotorCmd) {
-            case MTR_ON:
-               MotorON(iterator);
-               break;
-            case MTR_COAST:
-            case MTR_OFF:
-               MotorOFF(iterator);
-               break;
-            case MTR_RD:
-               MotorRD(iterator);
-               break;
-            case MTR_THISWAY:
-               MotorThisWay(iterator);
-               break;
-            case MTR_THATWAY:
-               MotorThatWay(iterator);
-               break;
-         }
+void MotorControl(int MotorCmd, int power) {
+  for (iterator=0;iterator<MotorCount;iterator++) {
+    if ((motorsActive >> iterator) & 1) {
+      int8 mtrMode = DC;
+      switch (MotorCmd) {
+        case CMD_MOTORS_ANGLE:
+          motor_intrp_count[iterator] = power;
+          mtrMode = SERVO;
+          break;
+        case CMD_MOTORS_ON:
+          MotorON(iterator);
+          break;
+        case CMD_MOTORS_OFF:
+          MotorOFF(iterator);
+          break;
+        case CMD_MOTORS_REVERT:
+          MotorRD(iterator);
+          break;
+        case CMD_MOTORS_THISWAY:
+          MotorThisWay(iterator);
+          break;
+        case CMD_MOTORS_THATWAY:
+          MotorThatWay(iterator);
+          break;
+        case CMD_MOTORS_POWER:
+          motor_intrp_count[iterator] = power*4;
+          break;
       }
-   }
+      if(motorMode(iterator) != mtrMode){ SetMotorMode(iterator, mtrMode); }
+    }
+  }
 }
-
 
 #int_timer1
 void clock_and_button() { //10 ms
@@ -212,15 +209,15 @@ void init_board() {
    output_low(RUN_LED);
    output_low(USER_LED);
 
-   set_tris_a(PIC_TRIS_A);
-   set_tris_b(PIC_TRIS_B);
-   set_tris_c(PIC_TRIS_C);
-   set_tris_d(PIC_TRIS_D);
-   set_tris_e(PIC_TRIS_E);
+   set_tris_a(0b00101111);
+   set_tris_b(0b00000011);
+   set_tris_c(0b00000000);
+   set_tris_d(0b00000010);
+   set_tris_e(0b00000111);
    
    setup_adc_ports(AN0_TO_AN7);
    setup_adc(ADC_CLOCK_INTERNAL);
-   set_adc_channel(0);
+   set_adc_channel(currentSensor);
 
    set_timer1(T1_COUNTER);
    set_rtcc(T0_COUNTER);
@@ -274,24 +271,55 @@ void init_variables() {
   usbBufferSize=0;
 }
 
+
 void processCommunication(){
-  unsigned int8 command;
-  if(usbBufferSize>0){
-    readUsbBuffer(&command);
-    printf(usb_cdc_putc,"%c", command);
+  if(usbBufferSize == 0){return;}
+  unsigned int8 command = readUsbBuffer();
+  if(command < CMD_MOTORS_BASE){
+    if(command == CMD_VERSION){
+      printf(usb_cdc_putc,"%c%c%c", 0, 2, 0);
+      return;
+    }
+    if(command == CMD_LEDON){
+      output_high(USER_LED);
+      return;
+    }
+    if(command == CMD_LEDOFF){
+      output_low(USER_LED);
+      return;
+    }
+    if(command == CMD_READSENSOR){
+      if(usbBufferSize>0){
+        unsigned int16 SensorVal = readSensor(readUsbBuffer());
+        printf(usb_cdc_putc,"%c%c", SensorVal >> 8, SensorVal & 0xff);
+      }
+      return;
+    }
+  }else{
+    if(command == CMD_ACTIVATEMOTORS){
+      if(usbBufferSize>0){
+        motorsActive = readUsbBuffer();
+      }
+      return;
+    }
+    if(command == CMD_MOTORS_POWER){
+      if(usbBufferSize>0){
+        MotorControl(command, readUsbBuffer());
+      }
+      return;
+    }
+    MotorControl(command,0);
   }
 }
 
-unsigned int8 readUsbBuffer(unsigned int8 *charPtr) {
-   if (usbBufferSize == 0) {
-      //*charPtr = 0;
-      return USB_NO_DATA;
-   }
-   *charPtr = usbBuffer[usbBufferStart];
+
+unsigned int8 readUsbBuffer() {
+   unsigned int8 command = usbBuffer[usbBufferStart];
    usbBufferStart++;
    usbBufferStart %= usb_buffer_max_size;
    usbBufferSize--;
-   return USB_SUCCESS;
+   printf(usb_cdc_putc,"%c", command);
+   return command;
 }
 
 void updateUsbBuffer() {
@@ -306,7 +334,7 @@ void updateUsbBuffer() {
 int main(){
   init_variables();
   init_board();
-	
+  
   usb_cdc_init();
   usb_init();
   usb_task();
@@ -317,49 +345,9 @@ int main(){
   }
 }
 
-
 /*
-######################################################################
-
-
-void miscControl(int cur_param, int cur_ext, int cur_ext_byte) {
-   switch (cur_param) {
-      case MISC_USER_LED:
-         if (cur_ext == TURN_USER_LED_ON) {
-            output_high(USER_LED);
-         } else {
-            output_low(USER_LED);
-         }
-         break;
-      case MISC_BEEP:
-         play_music();
-         break;
-      case MISC_SET_PWM:
-         MotorControl(MTR_ON);
-         MotorControl(MTR_THISWAY);
-         SetMotorMode(MOTOR_SERVO);
-         SetMotorPower(cur_ext_byte);
-         break;
-      case MISC_UPLOAD_EEPROM:
-         break;
-      case MISC_I2C_SETUP:
-         switch (cur_ext) {
-            case I2C_START:
-               i2c_start();
-               break;
-            case I2C_STOP:
-               i2c_stop();
-               break;
-            case I2C_WRITE:
-               i2c_write(cur_ext_byte);
-               break;
-            case I2C_READ:
-               i2c_read(0);
-               break;
-         }
-         break;
-   }
-}
+To  compile
+*/
 
 void flashSetWordAddress(int16 address) {
 
@@ -369,22 +357,6 @@ void flashSetWordAddress(int16 address) {
    gblFlashBufferPtr = address - gblFlashBaseAddress;
    read_program_memory(gblFlashBaseAddress, gblFlashBuffer, getenv("FLASH_ERASE_SIZE"));
 }
-
-void flashBufferedWrite(unsigned int16 InByte) {
-   gblFlashBuffer[gblFlashBufferPtr++] = (int) InByte;
-   gblFlashBuffer[gblFlashBufferPtr++] = (int)(InByte>>8);
-
-   if (!(gblFlashBufferPtr < (getenv("FLASH_ERASE_SIZE")))) {
-   if(!(gblFlashBaseAddress <= FIRMWARE_END)){
-      erase_program_eeprom(gblFlashBaseAddress);
-      write_program_memory(gblFlashBaseAddress, gblFlashBuffer, getenv("FLASH_ERASE_SIZE"));
-      gblFlashBufferPtr = 0;
-      gblFlashBaseAddress += getenv("FLASH_ERASE_SIZE");
-      read_program_memory(gblFlashBaseAddress, gblFlashBuffer, getenv("FLASH_ERASE_SIZE"));
-    }
-   }
-}
-
 
 void flashFlushBuffer() {
   if(!(gblFlashBaseAddress <= FIRMWARE_END)){
@@ -399,236 +371,3 @@ void flashWrite(int16 InByte) {
    flashFlushBuffer();
 }
 
-void ProcessInput() {
-  int InByte, buff_status;
-  int1 doNotStopRunningProcedure;
-   buff_status = readUsbBuffer(&InByte);
-  while (buff_status == USB_SUCCESS) {
-    gblCmdTimeOut = 0 ;
-    gblMostRecentlyReceivedByte = InByte;
-    gblNewByteHasArrivedFlag = 1;
-     printf(usb_cdc_putc, "%c",InByte);
-    switch (CMD_STATE) {
-      case WAITING_FOR_FIRST_HEADER:
-        switch (InByte) {
-          case InHeader1:
-            CMD_STATE = WAITING_FOR_SECOND_HEADER;
-            doNotStopRunningProcedure = 1;
-            break;
-          case SET_PTR:
-            CMD_STATE = SET_PTR_HI_BYTE;
-            break;
-          case READ_BYTES:
-            CMD_STATE = READ_BYTES_COUNT_HI;
-            break;
-          case WRITE_BYTES:
-            CMD_STATE = WRITE_BYTES_COUNT_HI;
-            break;
-          case RUN:
-            doNotStopRunningProcedure = 1;
-            output_high(RUN_LED);
-            gblWaitCounter = 0;
-            gblONFORNeedsToFinish = 0;
-            clearStack();
-            gblNewByteHasArrivedFlag = 0;
-            gblLogoIsRunning = 1;
-            break;
-          case CRICKET_CHECK:
-            CMD_STATE = CRICKET_NAME;
-            break;
-        };
-        if (!doNotStopRunningProcedure) {
-          gblLogoIsRunning = 0;
-          gblWaitCounter = 0;
-          output_low(RUN_LED);
-          gblBurstModeBits = 0;
-        }
-        doNotStopRunningProcedure=0;
-        break;
-      case WAITING_FOR_SECOND_HEADER:
-        if (InByte == InHeader2){
-              CMD_STATE = WAITING_FOR_CMD_BYTE;
-            }
-        break;
-      case WAITING_FOR_CMD_BYTE:
-        gbl_cur_cmd =(InByte & 0b11100000) >> 5;
-        gbl_cur_param =(InByte & 0b00011100) >> 2;
-        gbl_cur_ext =(InByte & 0b00000011);
-        if (gbl_cur_cmd > ONE_BYTE_CMD) {
-          CMD_STATE = WAITING_FOR_SECOND_CMD_BYTE;
-        } else {
-          CMD_STATE = CMD_READY;
-        }
-        break;
-      case WAITING_FOR_SECOND_CMD_BYTE:
-        gbl_cur_ext_byte = InByte;
-        CMD_STATE = CMD_READY;
-        break;
-      case CMD_READY:
-        break;
-      case SET_PTR_HI_BYTE:
-        gblMemPtr = (unsigned int16) InByte << 8;
-        CMD_STATE = SET_PTR_LOW_BYTE;
-        break;
-      case SET_PTR_LOW_BYTE:
-        gblMemPtr = gblMemPtr | InByte;
-        CMD_STATE = WAITING_FOR_FIRST_HEADER;
-        if ((gblMemPtr&0xff0) == 0xff0) {
-          gblMemPtr = (RUN_BUTTON_BASE_ADDRESS + ((gblMemPtr&0xf)*2)) - FLASH_USER_PROGRAM_BASE_ADDRESS ;
-          set_pwm1_duty(50);
-        } else {
-          gblMemPtr *= 2;
-        }
-        flashSetWordAddress(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
-        break;
-      case READ_BYTES_COUNT_HI:
-        gblRWCount = (unsigned int16) InByte << 8;
-        CMD_STATE = READ_BYTES_COUNT_LOW;
-        break;
-      case READ_BYTES_COUNT_LOW:
-        gblRWCount = gblRWCount | InByte;
-        sendBytes(gblMemPtr, gblRWCount);
-        gblMemPtr += gblRWCount;
-        CMD_STATE = WAITING_FOR_FIRST_HEADER;
-        break;
-      case WRITE_BYTES_COUNT_HI:
-        gblRWCount = (unsigned int16) InByte << 8;
-        CMD_STATE = WRITE_BYTES_COUNT_LOW;
-        break;
-      case WRITE_BYTES_COUNT_LOW:
-        gblRWCount = gblRWCount | InByte;
-        CMD_STATE = WRITE_BYTES_SENDING;
-        break;
-      case WRITE_BYTES_SENDING:
-        set_pwm1_duty(0);
-        if(HILOWHasArrivedFlag == 2){
-          adressHILOW += InByte;
-          HILOWHasArrivedFlag = 0;
-          flashBufferedWrite(adressHILOW);
-          if (--gblRWCount < 1) {
-            flashFlushBuffer();
-            CMD_STATE = WAITING_FOR_FIRST_HEADER;
-          }
-        } else {
-          if(HILOWHasArrivedFlag == 1){
-            adressHILOW = (int16) InByte;
-            adressHILOW <<= 8;
-            HILOWHasArrivedFlag = 2;
-          } else {
-            if(InByte ==128){
-              HILOWHasArrivedFlag = 1;
-              adressHILOW = 0;
-              flashBufferedWrite(InByte);
-              if (--gblRWCount < 1) {
-                flashFlushBuffer();
-                CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                }
-            } else{
-              flashBufferedWrite(InByte);
-              if (--gblRWCount < 1) {
-                flashFlushBuffer();
-                CMD_STATE = WAITING_FOR_FIRST_HEADER;
-              }
-            }
-          }
-        }
-        printf(usb_cdc_putc,"%c",255-InByte);
-        break;
-      case CRICKET_NAME:
-        printf(usb_cdc_putc,"%c",0x37);
-        CMD_STATE = WAITING_FOR_FIRST_HEADER;
-        break;
-      default:
-        CMD_STATE = WAITING_FOR_FIRST_HEADER;
-        break;
-    }
-    if (CMD_STATE == CMD_READY){
-        break;
-    }
-      buff_status = readUsbBuffer(&InByte);
-  }
-   if (buff_status == USB_OVERFLOW) {
-     CMD_STATE = WAITING_FOR_FIRST_HEADER;
-  }
-}
-
-
-
-void main() {
-   int16 SensorVal;
-   int16 uploadLen,counter;
-   int16 foo;
-
-   init_variables();
-   initBoard();
-
-   usb_cdc_init();
-   usb_init();
-   usb_task();
-
-   while (1) {
-      ReadUsb();
-      ProcessInput();
-      if (CMD_STATE == CMD_READY) {
-         switch (gbl_cur_cmd) {
-            case CMD_PING:
-              printf(usb_cdc_putc,"%c%c%c", ReplyHeader1, ReplyHeader2, ACK_BYTE);
-              printf(usb_cdc_putc,"%c%c%c", 0x01, 0x30, 0x01);
-              break;
-            case CMD_READ_SENSOR:
-              SensorVal = readSensor(gbl_cur_param);
-              printf(usb_cdc_putc,"%c%c%c%c",ReplyHeader1, ReplyHeader2, SensorVal >> 8, SensorVal & 0xff);
-              break;
-            case CMD_MOTOR_CONTROL:
-              MotorControl(gbl_cur_param);
-              printf(usb_cdc_putc,"%c%c%c", ReplyHeader1, ReplyHeader2, ACK_BYTE);
-              break;
-            case CMD_MOTOR_POWER:
-              SetMotorPower(gbl_cur_param);
-              printf(usb_cdc_putc,"%c%c%c", ReplyHeader1, ReplyHeader2, ACK_BYTE);
-              break;
-            case CMD_TALK_TO_MOTOR:
-              gblActiveMotors = gbl_cur_ext_byte;
-              printf(usb_cdc_putc,"%c%c%c", ReplyHeader1, ReplyHeader2, ACK_BYTE);
-              break;
-            case CMD_BURST_MODE:
-              SetBurstMode(gbl_cur_ext_byte, gbl_cur_ext);
-              printf(usb_cdc_putc,"%c%c%c", ReplyHeader1, ReplyHeader2, ACK_BYTE);
-              break;
-            case CMD_MISC_CONTROL:
-              miscControl(gbl_cur_param, gbl_cur_ext, gbl_cur_ext_byte);
-              printf(usb_cdc_putc,"%c%c%c", ReplyHeader1, ReplyHeader2, ACK_BYTE);
-              break;
-         }
-        if ((gbl_cur_cmd == CMD_MISC_CONTROL) && (gbl_cur_param == MISC_UPLOAD_EEPROM)) {
-            uploadLen = ((((int16)gbl_cur_ext<<8) + gbl_cur_ext_byte)<<5);
-
-            if (uploadLen == 0)
-               uploadLen = read_program_eeprom(MEM_PTR_LOG_BASE_ADDRESS);
-
-            uploadLen<<=1;
-            printf(usb_cdc_putc, "%c%c%c%c", EEPROMuploadHeader1, EEPROMuploadHeader2, uploadLen & 0xff, uploadLen >> 8);
-            uploadLen>>=1;
-            for (counter = 0 ; counter < uploadLen ; counter++) {
-               foo = read_program_eeprom((RECORD_BASE_ADDRESS + counter));
-               printf(usb_cdc_putc, "%c%c", foo&0xff, foo>>8);
-            }
-         }
-         CMD_STATE = WAITING_FOR_FIRST_HEADER;
-      } else {
-         DoSensorStuff();
-      }
-
-      if (gblLogoIsRunning) {
-         if (!gblWaitCounter)
-            evalOpcode(fetchNextOpcode());
-      }
-
-      if (gblCmdTimeOut > CMD_TIMEOUT_PERIOD) {
-         CMD_STATE = WAITING_FOR_FIRST_HEADER;
-         gblCmdTimeOut = 0;
-      }
-
-   }
-}
-*/
