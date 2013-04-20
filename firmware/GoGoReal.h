@@ -22,83 +22,30 @@ void stkPush(unsigned int16 stackItem);
 unsigned int16 stkPop();
 void inputPush(unsigned int16 stackItem);
 unsigned int16 inputPop(void);
+void enableTimer0();
+void tryDisableTimer0();
+void setNextInterupt(unsigned int8 MotorNo);
+void tryDisableChip();
 void MotorON(int MotorNo);
 void MotorOFF(int MotorNo);
+void MotorPower(unsigned int8 MotorNo, unsigned int8 power,unsigned int16 waitTime);
 void MotorRD(unsigned int8 MotorNo);
-void MotorThisWay(int MotorNo);
-void MotorThatWay(int MotorNo);
-void motorControl_TurnOff();
-void chip_enable_off();
-void SetMotorMode(int MotorNo, int motorMode);
+void MotorThisWay(unsigned int8 MotorNo);
+void MotorThatWay(unsigned int8 MotorNo);
+void SetMotorMode(int MotorNo, int mode);
 int motorMode(int MotorNo);
-void MotorControl(int MotorCmd, int power);
+void MotorControl(int MotorCmd, unsigned int8 power);
 unsigned int16 readSensor(int sensorNo);
 void init_board();
 void init_variables();
-
-unsigned int8 readUsbBuffer();
 void processCommunication();
+unsigned int8 readUsbBuffer();
 void updateUsbBuffer();
-
 /*
 To  compile
 */
 
 void flashSetWordAddress(int16 address);
-
 void flashFlushBuffer();
-
 void flashWrite(int16 InByte);
 
-
-/*
-######################################################################
-
-
-
-
-
-void setHigh(int16 Pin);
-void setLow(int16 Pin);
-int  readPin(int16 Pin);
-void Ping(int Param);
-void MotorControl(int MotorCmd);
-void SetMotorPower(int Power);
-void ChangeMotorPower(int delta);
-void sortMtrDuty();
-void SetMotorMode(int motorMode); // normal or servo
-void ENHigh(int groupNo);
-void ENLow(int groupNo);
-void MotorON(int MotorNo);
-void MotorOFF(int MotorNo);
-void MotorRD(int MotorNo);
-void MotorThisWay(int MotorNo);
-void MotorThatWay(int MotorNo);
-void MotorCoast(int MotorNo);
-void miscControl(int cur_param, int cur_ext, int cur_ext_byte);
-void play_music();
-void SetBurstMode(int SensorBits, int Mode);
-void DoSensorStuff();
-unsigned int16 readSensor(int sensorNo);
-void ProcessInput();
-void ProcessRFInput();
-void init_variables();
-void intro();
-void Halt();
-void initBoard();
-void timer2ISR();
-void version();
-void sendBytes(unsigned int16 memPtr, unsigned int16 count);
-void flashSetWordAddress(int16 address);
-void flashWrite(int16 InByte);
-
-void evalOpcode(unsigned char opcode);
-unsigned int16 gblInputStack[INPUT_STACK_SIZE];
-void stkPush(unsigned int16 stackItem);
-void inputPush(unsigned int16 stackItem);
-unsigned int16 inputPop(void);
-unsigned int16 stkPop(void);
-void clearStack();
-unsigned int16 fetchNextOpcode();
-
-*/

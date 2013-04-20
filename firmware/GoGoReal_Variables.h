@@ -17,84 +17,59 @@
 * along with GoGo Real.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//general loop iterator
-unsigned int8 iterator = 0;
-
-//motor
+//motors Config
+unsigned int16 mtrEnable[MTR_COUNT]; //pins
+unsigned int16 mtrS1[MTR_COUNT]; //pins
+unsigned int16 mtrS2[MTR_COUNT]; //pins
+unsigned int16 mtrChipEnable[MTR_COUNT/2]; //pins
+//motors Control
+int1 intrp0Enb;
 unsigned int16 intrp0_count = 0;
-unsigned int16 motor_intrp_count[MotorCount]; //0000
-unsigned int8  motorsconfig;//11110000 A on/off,B,C,D,A direction,B,C,D
-unsigned int8  motorsActive;// A,B,C,D active to send commands
-unsigned int8  motorsMode;// 01010101 // 85
-unsigned int16 motor_enable_pin[MotorCount]; //pins
-unsigned int16 motor_direct_pin[MotorCount]; //pins
-unsigned int16 motor_ground_pin[MotorCount]; //pins
-unsigned int16 motor_chip_enable_pin[MotorCount/2]; //pins
+unsigned int8  mtrsOnInterpt;//0000-0000 A,B,C,D on/off ; A ,B,C,D controlled by Interrupt
+unsigned int8  mtrsDirectionNextTurn; // 1111-1111 ThisWay , Turn On on the next Turn
+unsigned int8  mtrsActive;// A,B,C,D active to send commands
+unsigned int8  mtrsMode;// 01010101 // 85 DC DC DC DC 
+
+unsigned int8  mtrRun[MTR_COUNT];
+unsigned int16 mtrWait[MTR_COUNT];
+unsigned int16 mtrNextInterrupt[MTR_COUNT];
 
 //time 
 unsigned int16 seconds; // 0
 unsigned int16 miliseconds; // 0
 
-
 //sensor
 unsigned int8 currentSensor; //0
 
 //stack
-unsigned int8 stkPointer;
-unsigned int8 inputStkPointer;
-unsigned int16 stack[max_stack_size];
-unsigned int16 inputStack[max_stack_size];
+unsigned int8 stkPointer; //0
+unsigned int8 inputStkPointer; //0
+unsigned int16 stack[STACK_SIZE];
+unsigned int16 inputStack[STACK_SIZE];
 
 //usb 
-unsigned int8 usbBuffer[usb_buffer_max_size];
+unsigned int8 usbBuffer[USB_BUFFER_SIZE];
 unsigned int8 usbBufferStart; //0
 unsigned int8 usbBufferEnd; //0
-unsigned int8 usbBufferSize;
-
+unsigned int8 usbBufferSize;//0
 //button 
 int1 button_pressed;
-unsigned int16 time_pressing_button_ms; //0
+unsigned int16 time_pressing_button; //0
+
+//unsigned int1 usbReady;//0
 
 /*
 ######################################################################
 
 */
-
-int   gblInputStkPtr;
-unsigned int16 gblStack[32];
-int gblStkPtr;
+int1 gblLogoIsRunning;
 int16 globalVariables[16]={0};
 unsigned int16 gblRecordPtr;
-unsigned int16  gblMemPtr, gblRWCount;
-unsigned int CMD_STATE;
-int gbl_cur_cmd, gbl_cur_param, gbl_cur_ext, gbl_cur_ext_byte;
-int gblBurstModeBits;
-int gblBurstModeCounter;
-int1 gblSlowBurstMode;
-int1 gblSlowBurstModeTimerHasTicked;
-int gblCurSensorChannel;
-int gblMotorMode;
-int gblActiveMotors;
-int gblMotorDir;
-int gblMotorONOFF;
-int gblMtrDuty[MotorCount+1];
-unsigned int gblTimer0Counter;
-unsigned int gblDutyCycleFlag;
-unsigned int gblCurrentDutyIndex; 
-unsigned char gblMostRecentlyReceivedByte;
-int1 gblNewByteHasArrivedFlag;
-int1 gblLogoIsRunning;
-int1 gblButtonPressed;
-int1 gblBtn1AlreadyPressed;
+unsigned int16  gblMemPtr;
+int8 gblMostRecentlyReceivedByte;
+int8 gblNewByteHasArrivedFlag;
 unsigned int16 gblWaitCounter;
 unsigned int16 gblTimer;
-int gblCmdTimeOut;
-int gblUsbBuffer[32];
-int gblUsbBufferPutIndex;
-int gblUsbBufferGetIndex;
-int gblUsbBufferIsFull=FALSE;
-int HILOWHasArrivedFlag;
-int16 adressHILOW;
 char gblFlashBuffer[getenv("FLASH_ERASE_SIZE")];
 char gblFlashBufferPtr;
 int16 gblFlashBaseAddress;

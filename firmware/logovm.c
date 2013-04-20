@@ -23,7 +23,7 @@ void clearStack() {
 }
 
 void stkPush(unsigned int16 stackItem) {
-  if (stkPointer<max_stack_size) {
+  if (stkPointer<STACK_SIZE) {
     stack[stkPointer] = stackItem;
     stkPointer++;
   }
@@ -37,7 +37,7 @@ unsigned int16 stkPop() {
 }
 
 void inputPush(unsigned int16 stackItem) {
-   if (inputStkPointer<max_stack_size) {
+   if (inputStkPointer<STACK_SIZE) {
       inputStack[inputStkPointer++] = stackItem;
    }
 }
@@ -180,11 +180,11 @@ void evalOpcode(unsigned char opcode) {
       opr2 = inputPop();  // this is the data stack index;
       // remove any remaining data that belongs to the current procedure from the data stack
       // Usually this is important for the STOP opcode.
-      while (gblStkPtr > opr2){
-            stkPop();
+      while (stkPointer > opr2){
+        stkPop();
       }
       // remove the procedure inputs from the input stack
-      while (gblInputStkPtr > opr1){
+      while (inputStkPointer > opr1){
         inputPop();
       }
       // Output will push the output to the stack
@@ -376,25 +376,25 @@ void evalOpcode(unsigned char opcode) {
     case WHENOFF:
       break;
     case M_A:
-      gblActiveMotors = 1;
+      mtrsActive = 1;
       break;
     case M_B:
-      gblActiveMotors = 2;
+      mtrsActive = 2;
       break;
     case M_AB:
-      gblActiveMotors = 3;
+      mtrsActive = 3;
       break;
     case M_C:
-      gblActiveMotors = 4;
+      mtrsActive = 4;
       break;
     case M_D:
-      gblActiveMotors = 8;
+      mtrsActive = 8;
       break;
     case M_CD:
-      gblActiveMotors = 12;
+      mtrsActive = 12;
       break;
     case M_ABCD:
-      gblActiveMotors = 15;
+      mtrsActive = 15;
       break;
     case M_OFF:
       MotorControl(M_OFF,0);
@@ -504,7 +504,7 @@ void evalOpcode(unsigned char opcode) {
       }
       break;
     case TALK_TO_MOTOR:
-      gblActiveMotors = stkPop(); // this is the motor bits
+      mtrsActive = stkPop(); // this is the motor bits
       break;
     case CL_I2C_START:
       i2c_start();

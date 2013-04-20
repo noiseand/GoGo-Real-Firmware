@@ -18,45 +18,50 @@
 */
 
 //motors
-#define m0 0
-#define m1 1
-#define m2 2
-#define m3 3
+#define M0 0
+#define M1 1
+#define M2 2
+#define M3 3
 #define SERVO 0 
 #define DC 1
 #define STEPPER 2
 
-#define MotorCount      4
-#define T0_COUNTER      64937
-#define max_number_interrupts 400 // 400 * 0.05ms == 20ms
+#define MTR_COUNT       4
+#define T0_COUNTER     64937
+#define MTR_MAX_INTRPS 400 // 400 * 0.05ms == 20ms
+#define MTR_MAX_POWER  20
 
-#define MOTOR_AB_EN     PIN_B7
-#define MOTOR_CD_EN     PIN_D6
-#define m0_enb         PIN_B6
-#define m1_enb         PIN_B3
-#define m2_enb         PIN_D5
-#define m3_enb         PIN_D2
-#define m0_gnd         PIN_B5
-#define m0_high        PIN_B4
-#define m1_gnd         PIN_B2
-#define m1_high        PIN_D7
-#define m2_gnd         PIN_D4
-#define m2_high        PIN_D3
-#define m3_gnd         PIN_C6
-#define m3_high        PIN_C7
+#define MTR_AB_ENB     PIN_B7
+#define MTR_CD_ENB     PIN_D6
+
+#define M0_ENB          PIN_B6
+#define M0_S1           PIN_B5
+#define M0_S2           PIN_B4
+
+#define M1_ENB          PIN_B3
+#define M1_S1           PIN_B2
+#define M1_S2           PIN_D7
+
+#define M2_ENB          PIN_D5
+#define M2_S1           PIN_D4
+#define M2_S2           PIN_D3
+
+#define M3_ENB         PIN_D2
+#define M3_S1          PIN_C6
+#define M3_S2          PIN_C7
 
 //time
 #define T1_COUNTER      5535 // 10 ms
-#define min_time_pressing_button_ms 500//ms
+#define MIN_TIME_PRESSING_BUTTON 500//ms
 
 //sensor
-#define min_time_change_sensor 100
+#define MIN_TIME_CHANGE_SENSOR 100
 
 //statck
-#define max_stack_size 32
+#define STACK_SIZE 32
 
 //usb 
-#define usb_buffer_max_size 32
+#define USB_BUFFER_SIZE 32
 
 //Commands
 #define CMD_VERSION     0
