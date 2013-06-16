@@ -403,6 +403,19 @@ void processCommunication(){
       }
       return;
     }
+    if(command == CMD_BOOTLOADER){
+      write_eeprom(EEPROM_FLAG_ADDR,EEPROM_FLAG_CODE);
+      disable_interrupts(GLOBAL);
+      #asm
+      reset 
+      #endasm 
+	  delay_ms(50);
+      return;
+    }
+    if(command == CMD_MODE){
+      printf(usb_cdc_putc,"%c",70);//F
+      return;
+    }
   }else{
     if(command == CMD_ACTIVATEMOTORS){
       if(usbBufferSize>0){
