@@ -8,13 +8,13 @@
 #fuses HSPLL,NOWDT,NOPROTECT,USBDIV,PLL5,NODEBUG,CPUDIV1,VREGEN,NOLVP
 #use delay(clock=48000000)
 #use i2c(master, sda=PIN_B0, scl=PIN_B1, FORCE_HW,slow)
-
 #include <usb_cdc.h>
 
 //definição de pinos da placa
 #define RUN_BUTTON   PIN_D1
 #define RUN_LED      PIN_A4
 #define USER_LED     PIN_D0
+#define CMD_MODE     5
 
 //================ GOGOUSB bootloader ===============================================//
 #define LOADER_SIZE        (0x183F)
@@ -26,6 +26,8 @@ local_flag=FALSE; otherwise
 #define local_flag         0x25
 #reserve local_flag
 
+#define EEPROM_FLAG_ADDR         0x0
+#define EEPROM_FLAG_CODE         0xCE
 
 #define APPLICATION_START  (LOADER_SIZE+1)
 #define APPLICATION_END    (getenv("PROGRAM_MEMORY")-1)
