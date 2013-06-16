@@ -26,7 +26,7 @@
 #define DC 1
 #define STEPPER 2
 
-#define MTR_COUNT       4
+#define MTR_COUNT      4
 #define T0_COUNTER     64937
 #define MTR_MAX_INTRPS 400 // 400 * 0.05ms == 20ms
 #define MTR_MAX_POWER  20
@@ -34,17 +34,17 @@
 #define MTR_AB_ENB     PIN_B7
 #define MTR_CD_ENB     PIN_D6
 
-#define M0_ENB          PIN_B6
-#define M0_S1           PIN_B5
-#define M0_S2           PIN_B4
+#define M0_ENB         PIN_B6
+#define M0_S1          PIN_B5
+#define M0_S2          PIN_B4
 
-#define M1_ENB          PIN_B3
-#define M1_S1           PIN_B2
-#define M1_S2           PIN_D7
+#define M1_ENB         PIN_B3
+#define M1_S1          PIN_B2
+#define M1_S2          PIN_D7
 
-#define M2_ENB          PIN_D5
-#define M2_S1           PIN_D4
-#define M2_S2           PIN_D3
+#define M2_ENB         PIN_D5
+#define M2_S1          PIN_D4
+#define M2_S2          PIN_D3
 
 #define M3_ENB         PIN_D2
 #define M3_S1          PIN_C6
@@ -68,6 +68,7 @@
 #define CMD_LEDON       1
 #define CMD_LEDOFF      2
 #define CMD_READSENSOR  3
+#define CMD_BOOTLOADER  4
 
 #define CMD_MOTORS_BASE    64
 #define CMD_ACTIVATEMOTORS 64
