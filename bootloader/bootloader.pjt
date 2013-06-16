@@ -1,0 +1,67 @@
+[PROJECT]
+Target=bootloader.hex
+Development_Mode=
+Processor=0x4550
+Processor_Text=PIC18F4550
+ToolSuite=CCS
+
+[Directories]
+Include=C:\Program Files (x86)\PICC\;C:\Program Files (x86)\PICC\drivers\;C:\Program Files (x86)\PICC\Devices;
+Library=
+LinkerScript=
+
+[Target Data]
+FileList=bootloader.c
+BuildTool=C-COMPILER
+OptionString=+FH
+AdditionalOptionString=
+BuildRequired=1
+
+[bootloader.c]
+Type=4
+Path=
+FileList=
+BuildTool=
+OptionString=
+AdditionalOptionString=
+
+[mru-list]
+1=bootloader.c
+
+[Windows]
+0=0000 %S 0 0 796 451 3 0
+
+[Opened Files]
+1=bootloader.c
+2=bootloader.h
+3=..\..\..\..\..\Program Files (x86)\PICC\Devices\18f4550.H
+4=..\..\..\..\..\Program Files (x86)\PICC\drivers\usb_cdc.h
+5=..\..\..\..\..\Program Files (x86)\PICC\drivers\pic18_usb.h
+6=..\..\..\..\..\Program Files (x86)\PICC\drivers\usb_hw_layer.h
+7=..\..\..\..\..\Program Files (x86)\PICC\drivers\usb_desc_cdc.h
+8=..\..\..\..\..\Program Files (x86)\PICC\drivers\usb.h
+9=..\..\..\..\..\Program Files (x86)\PICC\drivers\usb.c
+10=..\..\..\..\..\Program Files (x86)\PICC\drivers\pic18_usb.c
+11=..\..\..\..\..\Program Files (x86)\PICC\drivers\ctype.h
+12=
+[Units]
+Count=1
+1=bootloader
+Link=0
+[defines]
+enabled=0
+D1=
+V1=
+[fileformats]
+forcecoff=0
+debug=0
+error=0
+object=0
+list=0
+scratch=0
+sta=0
+tre=0
+allerrors=0
+allwarnings=0
+stayupne=1
+stayupoe=0
