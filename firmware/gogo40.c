@@ -19,134 +19,20 @@
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-#include "bootloader.h"
 #case
-#include <GOGO40.H>
-
-#include <logovm.h>
+#include "bootloader.h"
 #include <stdlib.H>
+#include <GOGO40.H>
+#include <GoGoReal.h>
+#include <GoGoReal_Global_Variables.h>
+#include <logovm.c>
+
 
 #use fast_io(A)
 #use fast_io(B)
 #use fast_io(C)
 #use fast_io(D)
 #use fast_io(E)
-
-#define defaultPort      0
-#define channelSwitchDelay   50   // delay time in us after switching adc channels
-// Don't decrease this value without testing.
-// If the delay is too short (i.e. 10us) the adc won't
-// have enough time to stabilize before reading the
-// next channel.
-#define T1_COUNTER      7287
-
-#define  CMD_TIMEOUT_PERIOD  2     // determins how long befor the board will reset
-// the command state. Units in 1/10 of a second
-
-/////////////////////////////////////////////////////////////////
-//  Function Declaration
-/////////////////////////////////////////////////////////////////
-void setHigh(IOPointer Pin);
-void setLow(IOPointer Pin);
-int  readPin(IOPointer Pin);
-
-short getBit(int InByte, int BitNo);
-void setBit(int *InByte, int BitNo);
-void clearBit(int *InByte, int BitNo);
-
-void Ping(int Param);
-void TalkToMotor(int MotorBits);
-void MotorControl(int MotorCmd);
-void SetMotorPower(int Power);
-void ChangeMotorPower(int delta);
-void sortMtrDuty();
-void SetMotorMode(int motorMode); // normal or servo
-
-void ENHigh(int groupNo);
-void ENLow(int groupNo);
-
-void MotorON(int MotorNo);
-void MotorOFF(int MotorNo);
-void MotorRD(int MotorNo);
-void MotorThisWay(int MotorNo);
-void MotorThatWay(int MotorNo);
-void MotorCoast(int MotorNo);
-void miscControl(int cur_param, int cur_ext, int cur_ext_byte);
-
-void beep();
-
-void SetBurstMode(int SensorBits, int Mode);
-void DoSensorStuff();
-unsigned int16 readSensor(int sensorNo);
-long getSensorVal();
-void switchAdcChannel(int channelNo);
-
-void ProcessInput();
-void ProcessRFInput();
-void init_variables();
-void intro();
-void Halt();
-void initBoard();
-
-void timer2ISR();
-void version();
-
-/////////////////////////////////////////////////////////////////
-//  Global Variables
-/////////////////////////////////////////////////////////////////
-
-IOPointer  MotorENPins [MotorCount]={  MTR1_EN, MTR2_EN, MTR3_EN, MTR4_EN};
-IOPointer  MotorCWPins [MotorCount]={  MTR1_CW, MTR2_CW, MTR3_CW, MTR4_CW};
-IOPointer  MotorCCPins [MotorCount]={  MTR1_CC, MTR2_CC, MTR3_CC, MTR4_CC};
-
-unsigned int CMD_STATE;
-
-int gbl_cur_cmd, gbl_cur_param, gbl_cur_ext, gbl_cur_ext_byte;
-int gblBurstModeBits;
-int gblBurstModeCounter=0;   // tracks which sensor is the current burst mode sensor
-
-int1 gblSlowBurstMode=0;  // determinds which burst mode we're in (0=normal, 1=slow)
-int1 gblSlowBurstModeTimerHasTicked=0;  // ticks every 1/72 sec (by timer0)
-
-
-int gblCurSensorChannel;
-
-int gblMotorMode=0b00000000;   // default to normal mode
-int gblActiveMotors;
-int gblMotorDir=0;
-int gblMotorONOFF = 0;
-int gblMtrDuty[MotorCount+1] = {0xff,0xff,0xff,0xff,0xff};  // Motor PWM Duty cycle
-unsigned int gblTimer0Counter = MotorCount; // Motor duty cycle counter.
-unsigned int gblDutyCycleFlag = 0; // used to find the next duty cycle in timer0
-unsigned int gblCurrentDutyIndex = 0; // keeps track of the current duty cycle being used.
-
-// These two variables are for the NEWIR, IR commands in Cricket Logo
-// We replace the IR with the serial comm, of course.
-unsigned char gblMostRecentlyReceivedByte;
-int1 gblNewByteHasArrivedFlag = 0;
-
-
-int1 gblLogoIsRunning = 0;     // flags if logo procedures are runing
-int1 gblButtonPressed = 0;    // flags when the run button is pressed
-int1 gblBtn1AlreadyPressed = 0;
-unsigned int16 gblWaitCounter =0;  // used for the wait cmd in Logo vm
-
-unsigned int16 gblTimer = 0;   // This is the timer for the TIMER and RESETT commands
-
-int gblCmdTimeOut = 0; // counter to make sure the command state is not stuck somewhere
-
-int gblUsbBuffer[USB_BUFFER_SIZE];
-int gblUsbBufferPutIndex=0;
-int gblUsbBufferGetIndex=0;
-int gblUsbBufferIsFull=FALSE;
-
-int HILOWHasArrivedFlag = 0;
-int16 adressHILOW = 0;
-
-char gblFlashBuffer[getenv("FLASH_ERASE_SIZE")]; // buffer for flash write operations
-char gblFlashBufferPtr=0; // pointer with-in the flash buffer
-int16 gblFlashBaseAddress; // where the flash buffer shuld be written to in the flash mem
-int ttTimer0 = 0; 
 
 void version()
 {
@@ -401,7 +287,7 @@ void ENLow(int MotorNo) {
 
 
 void MotorON(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    if (getBit(gblMotorDir,MotorNo)) {
@@ -416,7 +302,7 @@ void MotorON(int MotorNo) {
 }
 
 void MotorOFF(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    output_high(MtrCC);
@@ -427,7 +313,7 @@ void MotorOFF(int MotorNo) {
 }
 
 void MotorRD(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    if (getBit(gblMotorDir,MotorNo))
@@ -445,7 +331,7 @@ void MotorRD(int MotorNo) {
 }
 
 void MotorThisWay(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    setBit(&gblMotorDir,MotorNo);
@@ -455,7 +341,7 @@ void MotorThisWay(int MotorNo) {
 
 
 void MotorThatWay(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    clearBit(&gblMotorDir,MotorNo);
@@ -464,7 +350,7 @@ void MotorThatWay(int MotorNo) {
 }
 
 void MotorCoast(int MotorNo) {
-   IOPointer MtrCC, MtrCW;
+   int16 MtrCC, MtrCW;
    MtrCW = MotorCWPins[MotorNo];
    MtrCC = MotorCCPins[MotorNo];
    clearBit(&gblMotorONOFF,MotorNo);
@@ -963,4 +849,4 @@ void main() {
    }
 }
 
-#include <logovm.c>
+
