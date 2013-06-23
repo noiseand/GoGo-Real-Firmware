@@ -16,7 +16,6 @@
 
 #define USBBufferSize 32  // USB input buffer size
 
-
 int8 flag_de_bootloader;
 #locate flag_de_bootloader=local_flag
 
@@ -68,100 +67,23 @@ void write_program(int32 location, char *src, int16 size){
 // converts ascii text to integer
 // i.e. '1' = 1, 'A' = 10
 int a2i(char asciiByte) {
-  if (asciiByte >= 'A' && asciiByte <= 'F'){
-    return((asciiByte) - 'A' + 10);  
+  if (asciiByte >= 'A'){
+    return((asciiByte) - 'A' + 10);
   }
-  if (asciiByte >= '0' && asciiByte <= '9'){
-    return( asciiByte - '0');
-  }
+  return(asciiByte - '0');
 }
 
-
-void load() {
-  // contadores e flags
-  int i=0,j=0;
+void main() {
+  int go=0;
+  int i=0;
   int1 notDone = 1;
-  // enderecos
   unsigned int16 extended_linear_address = 0;
   unsigned int16 writeAddr =0 ;
-  // variaveis para dados
   int Buffer[USBBufferSize];
-  int aux[32];
-  // configuracoes de escrita
   int recLen;
   char recType;
   char startChar;
-  do {
-    //usb_task();
-    delay_ms(10);
-    
-    do{
-      startChar = usb_cdc_getc();
-      if(startChar == CMD_MODE){
-       printf(usb_cdc_putc, "%c", 66);//B
-      }
-    }while (startChar != ':');
-    
-    for (i=0;i<6;i++) {// leitura de dados padrões
-      aux[i] = usb_cdc_getc();
-    }
-    recLen = (a2i(aux[0]) << 4) + a2i(aux[1]);// numero de bytes de dados
-    writeAddr = a2i(aux[2]);
-    writeAddr <<= 4;
-    writeAddr += a2i(aux[3]);
-    writeAddr <<= 4;
-    writeAddr += a2i(aux[4]);
-    writeAddr <<= 4;
-    writeAddr += a2i(aux[5]);
-
-    usb_cdc_getc(); // recebe o zero antes do recType
-    recType = usb_cdc_getc();// tipo de escrita , esta prevista 0, 1 e 4
-    // Manipulando os dados
-    for (i=0;i<(recLen*2);i++) {// pegando dados
-      aux[i] = usb_cdc_getc();
-    }
-    for (i=0,j=0;i<(recLen*2);i=i+2,j++) {// montando os bytes
-      Buffer[j] = a2i(aux[i]);
-      Buffer[j] <<= 4;
-      Buffer[j] += a2i(aux[i+1]);
-    }
-    if (recType == '1'){ //End Of File record
-      printf(usb_cdc_putc, "%c", FINISH_FLAG);
-      notDone = 0;
-    }
-    else if (recType == '4') {//Extended Linear Address Record, allowing for fully 32 bit addressing
-      extended_linear_address = Buffer[0];
-      extended_linear_address <<= 8;
-      extended_linear_address += Buffer[1];
-      printf(usb_cdc_putc, "%c", READY_FOR_NEXT);
-    }
-    else if (recType == '0') {//data record
-      if (extended_linear_address > 0) {// recebendo codigo da eeprom , bits de configuração, id ,
-        if (extended_linear_address == 0xf0) {
-          for (i=0,j=0;i<(recLen/2);i++,j=j+2){
-            write_eeprom((int)(writeAddr + i), Buffer[j]);
-     }
-        } else if (extended_linear_address == 0x30 ) {
-          // Não se pode reescrever os bits de configuração
-          // caso isso aconteça o bootloader não ira funcionar
-        }
-      } else {// extended_linear_address == 0 , recebendo o codigo principal
-        if (writeAddr <= LOADER_SIZE) {
-          printf(usb_cdc_putc, "%c", BOOTLOADER_OVERWRITE);
-        } else {
-          write_program(writeAddr,Buffer,recLen);
-        }
-      }
-      printf(usb_cdc_putc, "%c", READY_FOR_NEXT);
-    }
-  } while (notDone);
-  delay_ms(2000);   //give time for packet to flush
-}
-
-
-
-void main() {
-  int go = 0;
+  
   if (input(RUN_BUTTON)) {
     go = 1;
   }else{
@@ -177,13 +99,56 @@ void main() {
     usb_cdc_init();   
     usb_init();
     while (!usb_enumerated());
-   output_high(RUN_LED);
+    output_high(RUN_LED);
     output_high(USER_LED);
-    load();
+    do {
+      do{
+        startChar = usb_cdc_getc();
+        if(startChar == CMD_MODE){
+          printf(usb_cdc_putc, "%c", 66);//B
+        }
+      }while (startChar != ':');
+      recLen = (a2i(usb_cdc_getc()) << 4) + a2i(usb_cdc_getc());// numero de bytes de dados
+      writeAddr  = (a2i(usb_cdc_getc())<<= 4);
+      writeAddr += (a2i(usb_cdc_getc())<<= 4);
+      writeAddr += (a2i(usb_cdc_getc())<<= 4);
+      writeAddr += a2i(usb_cdc_getc());
+      usb_cdc_getc(); // recebe o zero antes do recType
+      recType = usb_cdc_getc();// tipo de escrita , esta prevista 0, 1 e 4
+      // Manipulando os dados
+      for (i=0;i<recLen;i++) {// pegando dados
+        Buffer[i] = (a2i(usb_cdc_getc()) << 4) + a2i(usb_cdc_getc());
+      }
+      if (recType == '1'){ //End Of File record
+        printf(usb_cdc_putc, "%c", FINISH_FLAG);
+        notDone = 0;
+      }
+      else if (recType == '4') {//Extended Linear Address Record, allowing for fully 32 bit addressing
+        extended_linear_address = (Buffer[0] << 8) + Buffer[1];
+        printf(usb_cdc_putc, "%c", READY_FOR_NEXT);
+      }
+      else if (recType == '0') {//data record
+        if (extended_linear_address > 0) {// recebendo codigo da eeprom , bits de configuração, id ,
+          if (extended_linear_address == 0xf0) {
+            int j = 0;
+            for (i=0,j=0;i<(recLen/2);i++,j=j+2){
+              write_eeprom((int)(writeAddr + i), Buffer[j]);
+            }
+          }else if (extended_linear_address == 0x30 ) { // config bits
+          }
+        } else {// extended_linear_address == 0 , recebendo o codigo principal
+          if (writeAddr <= LOADER_SIZE) {
+            printf(usb_cdc_putc, "%c", BOOTLOADER_OVERWRITE);
+          } else {
+            write_program(writeAddr,Buffer,recLen);
+          }
+        }
+        printf(usb_cdc_putc, "%c", READY_FOR_NEXT);
+      }
+    }while(notDone);
     output_low(RUN_LED);
     output_low(USER_LED); 
     reset_cpu();
-    delay_ms(50);
   }
   flag_de_bootloader=FALSE;
   goto_address(APPLICATION_START);

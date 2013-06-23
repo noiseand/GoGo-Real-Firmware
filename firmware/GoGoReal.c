@@ -409,7 +409,6 @@ void processCommunication(){
       #asm
       reset 
       #endasm 
-	  delay_ms(50);
       return;
     }
     if(command == CMD_MODE){
