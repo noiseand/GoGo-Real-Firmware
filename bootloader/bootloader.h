@@ -15,33 +15,28 @@
 #define RUN_BUTTON   PIN_D1
 #define RUN_LED      PIN_A4
 #define USER_LED     PIN_D0
-#define USER_LED2    PIN_C0
-#define USER_LED3    PIN_C1
 
-//================ GOGOUSB bootloader ===============================================//
 #define LOADER_SIZE        (0x183F)
 
-/* Bootloader Flag:
-local_flag=TRUE; while using bootloader
-local_flag=FALSE; otherwise
-*/
 #define local_flag         0x25
 #reserve local_flag
 
+#define EEPROM_FLAG_ADDR         0x0
+#define EEPROM_FLAG_CODE         0xCE
 
 #define APPLICATION_START  (LOADER_SIZE+1)
 #define APPLICATION_END    (getenv("PROGRAM_MEMORY")-1)
 #define APPLICATION_ISR    (APPLICATION_START+8)
-
+#define EEPROM_ERASE_SIZE  getenv("FLASH_ERASE_SIZE")
+#define EEPROM_WRITE_SIZE  getenv("FLASH_WRITE_SIZE")
 
 #ifdef _bootloader
-   #define EEPROM_ERASE_SIZE  getenv("FLASH_ERASE_SIZE")
-   #define EEPROM_WRITE_SIZE  getenv("FLASH_WRITE_SIZE")
-   #define LOADER_ISR 0x28
-   #build(interrupt=LOADER_ISR)
+#ROM getenv("EEPROM_ADDRESS")={EEPROM_FLAG_CODE}
+#define LOADER_ISR 0x28
+#build(interrupt=LOADER_ISR)
 #endif
 
 #ifndef _bootloader
-   #build(reset=APPLICATION_START, interrupt=APPLICATION_ISR)
-   #org 0, LOADER_SIZE {}
+#build(reset=APPLICATION_START, interrupt=APPLICATION_ISR)
+#org 0, LOADER_SIZE {}
 #endif
