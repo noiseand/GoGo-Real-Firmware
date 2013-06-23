@@ -1,5 +1,5 @@
 //
-// logovm.c - Logo compiler support routines
+// evalopcode.h - Header declarations for the Logo Operations
 //
 // Copyright (C) 2001-2007 Massachusetts Institute of Technology
 // Contact   Arnan (Roger) Sipiatkiat [arnans@gmail.com]
@@ -23,6 +23,7 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
+
 /////////////////////////////////////////////////////
 //
 //  Logo Virtual Machine
@@ -33,7 +34,7 @@
 //  on the Cricket Logo.
 //
 //  Cricket Logo creators include:
-//    Fred G. Martin
+//    Fred Martin
 //    Brian Silverman
 //    Mitchel Resnick
 //    Robbie Berg
@@ -41,32 +42,12 @@
 /////////////////////////////////////////////////////
 
 
-#include <evalOpcode.c>      // This is the Opcode evaluator
-#include <stack.c>         // Push/Pop functions for Op-code execution
+int16 gblLoopAddress=0;   // Stores the start address of a Loop
+int16 gblRepeatCount=0;  // Tracks the progress of the repeat command
 
+int1 gblONFORNeedsToFinish=0;  // flags when onfor is launched
+// it causes fetchNextOpcode() to return
+// an Off command the next time it is called
 
-
-
-void sendBytes(unsigned int16 memPtr, unsigned int16 count) {
-	while (count-- > 0)
-		printf(usb_cdc_putc,"%c",read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + memPtr++));
-
-}
-
-
-unsigned int16 fetchNextOpcode() {
-	unsigned int16 opcode;
-
-	// if an ONFOR command was launched we must turn motor off before
-	// continuing. When gblONFORNeedsToFinish is falged, we simulate
-	// a motor off command.
-	if (gblONFORNeedsToFinish) {
-		gblONFORNeedsToFinish = 0;
-		return(M_OFF);
-	} else {
-		opcode = read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
-		gblMemPtr+=2;
-	}
-
-	return opcode;
-}
+void evalOpcode(unsigned char opcode);
+#separate void evalOpcode2(unsigned char opcode);
