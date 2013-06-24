@@ -103,17 +103,13 @@ void main() {
     output_high(USER_LED);
     do {
       while (usb_cdc_getc() != ':');
-      for (i=0;i<6;i++) {// leitura de dados padrões
-        aux[i] = usb_cdc_getc();
-      }
-      recLen = (a2i(aux[0]) << 4) + a2i(aux[1]);// numero de bytes de dados
-      writeAddr = a2i(aux[2]);
+      recLen = (a2i(usb_cdc_getc()) << 4) + a2i(usb_cdc_getc();// numero de bytes de dados
+      writeAddr = (a2i(usb_cdc_getc()) << 4);
+      writeAddr += a2i(usb_cdc_getc());
       writeAddr <<= 4;
-      writeAddr += a2i(aux[3]);
+      writeAddr += a2i(usb_cdc_getc());
       writeAddr <<= 4;
-      writeAddr += a2i(aux[4]);
-      writeAddr <<= 4;
-      writeAddr += a2i(aux[5]);
+      writeAddr += a2i(usb_cdc_getc());
       usb_cdc_getc(); // recebe o zero antes do recType
       recType = usb_cdc_getc();// tipo de escrita , esta prevista 0, 1 e 4
       // Manipulando os dados
