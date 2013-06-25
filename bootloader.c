@@ -103,8 +103,7 @@ void main() {
       output_high(USER_LED);
       while (usb_cdc_getc() != ':');
       recLen = (a2i(usb_cdc_getc()) << 4) + a2i(usb_cdc_getc());// numero de bytes de dados
-      writeAddr = (a2i(usb_cdc_getc()) << 4);
-      writeAddr += a2i(usb_cdc_getc());
+      writeAddr = (a2i(usb_cdc_getc()) << 4) + a2i(usb_cdc_getc());
       writeAddr <<= 4;
       writeAddr += a2i(usb_cdc_getc());
       writeAddr <<= 4;
@@ -117,12 +116,10 @@ void main() {
       output_low(USER_LED);
       if (recType == '1'){
         printf(usb_cdc_putc, "%c", FINISH_FLAG);
-        notDone = 0;    
+        notDone = 0;
       }
       else if (recType == '4') {
-        extended_linear_address = Buffer[0];
-        extended_linear_address <<= 8;
-        extended_linear_address += Buffer[1];
+        extended_linear_address = (int16) ((Buffer[0] << 8) + Buffer[1]);
         printf(usb_cdc_putc, "%c", READY_FOR_NEXT);
       }
       else if (recType == '0') {
@@ -141,7 +138,6 @@ void main() {
         }
         printf(usb_cdc_putc, "%c", READY_FOR_NEXT);
       }
-
     } while (notDone);
     delay_ms(100);
     output_low(RUN_LED);

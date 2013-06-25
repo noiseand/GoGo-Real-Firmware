@@ -16,7 +16,7 @@
 #define RUN_LED      PIN_A4
 #define USER_LED     PIN_D0
 
-#define LOADER_SIZE        (0x186F)
+#define LOADER_SIZE        (0x174F)
 
 #define local_flag         0x25
 #reserve local_flag
@@ -24,7 +24,7 @@
 #define EEPROM_FLAG_ADDR         0x0
 #define EEPROM_FLAG_CODE         0xCE
 
-#define APPLICATION_START  (LOADER_SIZE+10)
+#define APPLICATION_START  (LOADER_SIZE+1)
 #define APPLICATION_END    (getenv("PROGRAM_MEMORY")-1)
 #define APPLICATION_ISR    (APPLICATION_START+8)
 #define EEPROM_ERASE_SIZE  getenv("FLASH_ERASE_SIZE")
