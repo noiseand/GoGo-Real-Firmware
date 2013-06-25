@@ -1,8 +1,28 @@
+/* Copyright (C) 2010-2012 Lucas Anibal Tanure Alves - ME
+* Contact: Lucas Tanure [lucastanure@gogoreal.com.br]
+*   
+* This file is part of GoGo Real.
+*
+* GoGo Real is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* GoGo Real is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with GoGo Real.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 //************************* GOGOBR   *******************************************//
 //*****  bootloader  ***********************************************************//
 //*****  autor:  Felipe Augusto Silva  *****************************************//
 //*****  email:  fel1310@hotmail.com   *****************************************//
 //******************************************************************************//
+
 #include <18f4550.H>
 #device ADC=10 *=16
 #fuses HSPLL,NOWDT,NOPROTECT,USBDIV,PLL5,NODEBUG,CPUDIV1,VREGEN,NOLVP
@@ -11,7 +31,7 @@
 
 #include <usb_cdc.h>
 
-//definição de pinos da placa
+//definiï¿½ï¿½o de pinos da placa
 #define RUN_BUTTON   PIN_D1
 #define RUN_LED      PIN_A4
 #define USER_LED     PIN_D0
