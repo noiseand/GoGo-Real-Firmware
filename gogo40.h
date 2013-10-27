@@ -114,7 +114,7 @@
 #define MTR4_CC         PIN_C7
 #define MTR4_EN         PIN_D2
 
-#define PIC_TRIS_B   0b00000000
+#define PIC_TRIS_B   0b00000011
 #define PIC_TRIS_A   0b00101111
 #define PIC_TRIS_C   0b00000000
 #define PIC_TRIS_D   0b00000010
