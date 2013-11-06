@@ -27,9 +27,7 @@
 #include "gogoreal.h"
 #include "global_variables.h"
 #include "logovm.c"
-#include "evalOpcode.h"
 #include "evalOpcode.c"      // This is the Opcode evaluator
-#include "stack.c"         // Push/Pop functions for Op-code execution
 
 #use fast_io(A)
 #use fast_io(B)
