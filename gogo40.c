@@ -22,6 +22,7 @@
 #include "bootloader.h"
 #case
 #include <GOGO40.H>
+#include "gogoreal.h"
 
 #include <logovm.h>
 #include <stdlib.H>
@@ -43,53 +44,6 @@
 #define  CMD_TIMEOUT_PERIOD  2     // determins how long befor the board will reset
 // the command state. Units in 1/10 of a second
 
-/////////////////////////////////////////////////////////////////
-//  Function Declaration
-/////////////////////////////////////////////////////////////////
-void setHigh(IOPointer Pin);
-void setLow(IOPointer Pin);
-int  readPin(IOPointer Pin);
-
-short getBit(int InByte, int BitNo);
-void setBit(int *InByte, int BitNo);
-void clearBit(int *InByte, int BitNo);
-
-void Ping(int Param);
-void TalkToMotor(int MotorBits);
-void MotorControl(int MotorCmd);
-void SetMotorPower(int Power);
-void ChangeMotorPower(int delta);
-void sortMtrDuty();
-void SetMotorMode(int motorMode); // normal or servo
-
-void ENHigh(int groupNo);
-void ENLow(int groupNo);
-
-void MotorON(int MotorNo);
-void MotorOFF(int MotorNo);
-void MotorRD(int MotorNo);
-void MotorThisWay(int MotorNo);
-void MotorThatWay(int MotorNo);
-void MotorCoast(int MotorNo);
-void miscControl(int cur_param, int cur_ext, int cur_ext_byte);
-
-void beep();
-
-void SetBurstMode(int SensorBits, int Mode);
-void DoSensorStuff();
-unsigned int16 readSensor(int sensorNo);
-long getSensorVal();
-void switchAdcChannel(int channelNo);
-
-void ProcessInput();
-void ProcessRFInput();
-void init_variables();
-void intro();
-void Halt();
-void initBoard();
-
-void timer2ISR();
-void version();
 
 /////////////////////////////////////////////////////////////////
 //  Global Variables

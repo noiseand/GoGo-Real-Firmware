@@ -205,5 +205,4 @@ unsigned int16  gblMemPtr,     // FLASH/EEPROM pointer
 gblRWCount;    // Read/Write length
 
 // Sends bytes to the computer
-void sendBytes(unsigned int16 memPtr, unsigned int16 count);
-unsigned int16 fetchNextOpcode();
+

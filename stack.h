@@ -31,17 +31,7 @@ int   gblStkPtr,   // ptr to the top of the data stack
 gblErrFlag;  // error flag
 unsigned int16 gblStack[STACK_SIZE];
 
-
-void stkErro();
-
 int   gblInputStkPtr;   // ptr to the top of the procedure input stack
 unsigned int16 gblInputStack[INPUT_STACK_SIZE];
 
 
-void stkPush(unsigned int16 stackItem);
-unsigned int16 stkPop(void);
-
-void inputPush(unsigned int16 stackItem);
-unsigned int16 inputPop(void);
-
-void clearStack();

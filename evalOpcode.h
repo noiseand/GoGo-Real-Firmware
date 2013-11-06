@@ -49,5 +49,5 @@ int1 gblONFORNeedsToFinish=0;  // flags when onfor is launched
 // it causes fetchNextOpcode() to return
 // an Off command the next time it is called
 
-void evalOpcode(unsigned char opcode);
+
 #separate void evalOpcode2(unsigned char opcode);
