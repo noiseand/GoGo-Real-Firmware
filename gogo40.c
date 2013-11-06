@@ -38,7 +38,35 @@
 #use fast_io(E)
 
 
+void stkPush(unsigned int16 stackItem) {
+  if (gblStkPtr<STACK_SIZE) {
+    gblStack[gblStkPtr] = stackItem;
+    gblStkPtr++;
+  }
+}
 
+unsigned int16 stkPop() {
+ if (gblStkPtr>0) {
+    gblStkPtr--;
+    return gblStack[gblStkPtr];
+ }
+ gblLogoIsRunning = 0;//Stop Logo Code
+ return 0;
+}
+
+void inputPush(unsigned int16 stackItem) {
+  if (gblInputStkPtr<INPUT_STACK_SIZE) {
+    gblInputStack[gblInputStkPtr++] = stackItem;
+  }
+}
+
+unsigned int16 inputPop(void) {
+  if (gblInputStkPtr>0) {
+    return(gblInputStack[--gblInputStkPtr]);
+  }
+  gblLogoIsRunning = 0;//Stop Logo Code
+  return 0;
+}
 
 void version()
 {
