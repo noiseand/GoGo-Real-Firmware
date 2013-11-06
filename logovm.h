@@ -191,18 +191,7 @@
 
 
 
-/////////////////////////////////////////////////
-//   Global variables
 
-
-int16 globalVariables[16]={0};
-
-unsigned int16 gblRecordPtr; // pointer to the current location in the data eeprom
-// it will be initiazlied to the most recent record location
-// in init_variables()
-
-unsigned int16  gblMemPtr,     // FLASH/EEPROM pointer
-gblRWCount;    // Read/Write length
 
 // Sends bytes to the computer
 

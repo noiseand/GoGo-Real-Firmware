@@ -42,12 +42,7 @@
 /////////////////////////////////////////////////////
 
 
-int16 gblLoopAddress=0;   // Stores the start address of a Loop
-int16 gblRepeatCount=0;  // Tracks the progress of the repeat command
 
-int1 gblONFORNeedsToFinish=0;  // flags when onfor is launched
-// it causes fetchNextOpcode() to return
-// an Off command the next time it is called
 
 
 #separate void evalOpcode2(unsigned char opcode);

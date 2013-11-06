@@ -27,11 +27,6 @@
 #define STACK_SIZE      		32
 #define INPUT_STACK_SIZE		32
 
-int   gblStkPtr,   // ptr to the top of the data stack
-gblErrFlag;  // error flag
-unsigned int16 gblStack[STACK_SIZE];
 
-int   gblInputStkPtr;   // ptr to the top of the procedure input stack
-unsigned int16 gblInputStack[INPUT_STACK_SIZE];
 
 
