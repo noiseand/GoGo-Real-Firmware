@@ -135,7 +135,8 @@ void timer1ISR() {
             //leitura da regiao onde começara o codigo logo
             gblMemPtr = (read_program_eeprom(RUN_BUTTON_BASE_ADDRESS)<<8)+read_program_eeprom(RUN_BUTTON_BASE_ADDRESS+2);
             gblMemPtr *= 2;
-            clearStack();
+	     gblStkPtr=0;
+	     gblInputStkPtr=0;
             gblNewByteHasArrivedFlag=0;
             gblLogoIsRunning = 1;
          } else {
@@ -633,7 +634,8 @@ void ProcessInput() {
                   output_high(RUN_LED);
                   gblWaitCounter = 0;
                   gblONFORNeedsToFinish = 0;
-                  clearStack();
+                   gblStkPtr=0;
+		   gblInputStkPtr=0;
                   gblNewByteHasArrivedFlag = 0;
                   gblLogoIsRunning = 1;
                   break;

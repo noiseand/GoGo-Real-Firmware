@@ -6,7 +6,6 @@ void stkPush(unsigned int16 stackItem);
 unsigned int16 stkPop(void);
 void inputPush(unsigned int16 stackItem);
 unsigned int16 inputPop(void);
-void clearStack();
 void stkErro();
 void sendBytes(unsigned int16 memPtr, unsigned int16 count);
 unsigned int16 fetchNextOpcode();
