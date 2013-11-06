@@ -26,12 +26,8 @@
 #include <GOGO40.H>
 #include "gogoreal.h"
 #include "global_variables.h"
-#include "logovm.h"
-
 #include "logovm.c"
-#include "stack.h"
 #include "evalOpcode.h"
-#include "memoryMap.h"
 #include "evalOpcode.c"      // This is the Opcode evaluator
 #include "stack.c"         // Push/Pop functions for Op-code execution
 
