@@ -313,7 +313,7 @@ void ENLow(int MotorNo) {
 }
 
 void MotorON(int MotorNo) {
-    IOPointer MtrCC, MtrCW;
+    int16 MtrCC, MtrCW;
     MtrCW = MotorCWPins[MotorNo];
     MtrCC = MotorCCPins[MotorNo];
     if (getBit(gblMotorDir, MotorNo)) {
@@ -328,7 +328,7 @@ void MotorON(int MotorNo) {
 }
 
 void MotorOFF(int MotorNo) {
-    IOPointer MtrCC, MtrCW;
+    int16 MtrCC, MtrCW;
     MtrCW = MotorCWPins[MotorNo];
     MtrCC = MotorCCPins[MotorNo];
     output_high(MtrCC);
@@ -339,7 +339,7 @@ void MotorOFF(int MotorNo) {
 }
 
 void MotorRD(int MotorNo) {
-    IOPointer MtrCC, MtrCW;
+    int16 MtrCC, MtrCW;
     MtrCW = MotorCWPins[MotorNo];
     MtrCC = MotorCCPins[MotorNo];
     if (getBit(gblMotorDir, MotorNo)) {
@@ -354,7 +354,7 @@ void MotorRD(int MotorNo) {
 }
 
 void MotorThisWay(int MotorNo) {
-    IOPointer MtrCC, MtrCW;
+    int16 MtrCC, MtrCW;
     MtrCW = MotorCWPins[MotorNo];
     MtrCC = MotorCCPins[MotorNo];
     setBit(&gblMotorDir, MotorNo);
@@ -363,7 +363,7 @@ void MotorThisWay(int MotorNo) {
 }
 
 void MotorThatWay(int MotorNo) {
-    IOPointer MtrCC, MtrCW;
+    int16 MtrCC, MtrCW;
     MtrCW = MotorCWPins[MotorNo];
     MtrCC = MotorCCPins[MotorNo];
     clearBit(&gblMotorDir, MotorNo);
@@ -372,7 +372,7 @@ void MotorThatWay(int MotorNo) {
 }
 
 void MotorCoast(int MotorNo) {
-    IOPointer MtrCC, MtrCW;
+    int16 MtrCC, MtrCW;
     MtrCW = MotorCWPins[MotorNo];
     MtrCC = MotorCCPins[MotorNo];
     clearBit(&gblMotorONOFF, MotorNo);
@@ -418,12 +418,6 @@ void miscControl(int cur_param, int cur_ext, int cur_ext_byte) {
         break;
     }
 }
-void uLED_on() {
-    output_high (USER_LED);
-}
-void uLED_off() {
-    output_low (USER_LED);
-}
 
 void beep() {
     set_pwm1_duty(50);
@@ -437,9 +431,7 @@ void DoSensorStuff() {
     if (!gblSlowBurstMode || gblSlowBurstModeTimerHasTicked) {
         if ((gblBurstModeBits >> gblBurstModeCounter) & 1) {
             SensorVal = readSensor(gblBurstModeCounter);
-            printf(usb_cdc_putc, "%c%c%c", 0x0c,
-                    (gblBurstModeCounter << 5) | (SensorVal >> 8),
-                    SensorVal & 0xff);
+            printf(usb_cdc_putc, "%c%c%c", 0x0c,(gblBurstModeCounter << 5) | (SensorVal >> 8),SensorVal & 0xff);
         }
         gblBurstModeCounter = (gblBurstModeCounter + 1) % 8;
         gblSlowBurstModeTimerHasTicked = 0;
@@ -457,7 +449,6 @@ void SetBurstMode(int SensorBits, int Mode) {
 }
 
 unsigned int16 readSensor(int sensorNo) {
-
     if (gblCurSensorChannel != sensorNo) {
         set_adc_channel(sensorNo);
         gblCurSensorChannel=sensorNo;
@@ -466,9 +457,8 @@ unsigned int16 readSensor(int sensorNo) {
     return read_adc();
 }
 
-byte readUsbBuffer(byte *charPtr) {
+int readUsbBuffer(int *charPtr) {
     int errorCode;
-
     if (gblUsbBufferIsFull == TRUE) {
         gblUsbBufferIsFull = FALSE;
         errorCode = USB_OVERFLOW;
@@ -486,7 +476,6 @@ byte readUsbBuffer(byte *charPtr) {
         }
         errorCode = USB_SUCCESS;
     }
-
     return (errorCode);
 }
 
@@ -599,7 +588,7 @@ void flashWrite(int16 InByte) {
 }
 
 void ProcessInput() {
-    byte InByte, buff_status;
+    int InByte, buff_status;
     int1 doNotStopRunningProcedure;
     while ((buff_status = readUsbBuffer(&InByte)) == USB_SUCCESS) {
         gblCmdTimeOut = 0;

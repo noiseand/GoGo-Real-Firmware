@@ -22,10 +22,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
-#define byte int
-#define IOPointer int16
-
 #define CMD_PING         0x00
 #define CMD_READ_SENSOR      0x01
 #define CMD_MOTOR_CONTROL   0x02
