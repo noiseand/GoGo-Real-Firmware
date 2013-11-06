@@ -535,8 +535,7 @@ void evalOpcode(unsigned char opcode) {
 
         break;
     case TALK_TO_MOTOR:
-        opr1 = stkPop(); // this is the motor bits
-        TalkToMotor(opr1);
+        gblActiveMotors = stkPop();
         break;
     case CL_I2C_START:
         i2c_start();

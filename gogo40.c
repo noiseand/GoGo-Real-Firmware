@@ -95,71 +95,73 @@ unsigned int16 fetchNextOpcode() {
 
 #int_rtcc
 void clock_isr() {
-    int i;
-    unsigned int minDuty;
-    unsigned int nextDutyIndex;
-    unsigned int periodTilNextInterrupt;
-    ttTimer0++;
-    if (ttTimer0 == 2) {
-        ttTimer0 = 0;
-        do {
-            if (gblTimer0Counter < MotorCount) {
-                if (getBit(gblMotorONOFF, gblCurrentDutyIndex) == ON) {
-                    if (gblMtrDuty[gblCurrentDutyIndex] < 255) {
-                        if (getBit(gblMotorMode, gblCurrentDutyIndex)
-                                == MOTOR_NORMAL) {
-                            if (getBit(gblMotorDir, gblCurrentDutyIndex))
-                                output_low (MotorCWPins[gblCurrentDutyIndex]);
-                            else
-                                output_low (MotorCCPins[gblCurrentDutyIndex]);
-                        } else
-                            output_low (MotorCCPins[gblCurrentDutyIndex]);
-                    }
-                }
+  int i;
+  unsigned int minDuty;
+  unsigned int nextDutyIndex;
+  unsigned int periodTilNextInterrupt;
+  ttTimer0++;
+  if (ttTimer0 == 2){
+    ttTimer0 =0;
+    do {
+      if (gblTimer0Counter < MotorCount) {
+        if (((gblMotorONOFF >> gblCurrentDutyIndex) & 1) == ON) {
+          if (gblMtrDuty[gblCurrentDutyIndex] < 255) {
+            if (((gblMotorMode >> gblCurrentDutyIndex) & 1) == MOTOR_NORMAL) {
+              if (((gblMotorDir >> gblCurrentDutyIndex) & 1)){
+                output_low(MotorCWPins[gblCurrentDutyIndex]);
+              } else {
+                output_low(MotorCCPins[gblCurrentDutyIndex]);
+              }
             } else {
-                for (i = 0; i < MotorCount; i++) {
-                    if (getBit(gblMotorONOFF, i) == ON) {
-                        if (gblMtrDuty[i] > 0) {
-                            if (getBit(gblMotorMode, i) == MOTOR_NORMAL) {
-                                if (getBit(gblMotorDir, i)){
-                                    output_high (MotorCWPins[i]);
-                                } else {
-                                    output_high (MotorCCPins[i]);
-                                }
-                            } else
-                                output_high (MotorCCPins[i]);
-                        }
-                    }
-                }
+              output_low(MotorCCPins[gblCurrentDutyIndex]);
             }
-            minDuty = 255;
-            for (i = 0; i <= MotorCount; i++) {
-                if ((minDuty >= gblMtrDuty[i])
-                        && !(getBit(gblDutyCycleFlag, i))) {
-                    minDuty = gblMtrDuty[i];
-                    nextDutyIndex = i;
-                }
-            }
-            setBit(&gblDutyCycleFlag, nextDutyIndex);
-            if (gblTimer0Counter < MotorCount)
-                periodTilNextInterrupt = minDuty
-                - gblMtrDuty[gblCurrentDutyIndex];
-            else
-                periodTilNextInterrupt = minDuty;
-            gblCurrentDutyIndex = nextDutyIndex;
-            if (gblTimer0Counter == MotorCount - 1)
-                gblDutyCycleFlag = 0;
-            if (gblTimer0Counter < MotorCount)
-                gblTimer0Counter++;
-            else
-                gblTimer0Counter = 0;
-        } while ((periodTilNextInterrupt == 0) && (gblTimer0Counter > 0));
-
-        if (gblTimer0Counter == 0) {
-            gblSlowBurstModeTimerHasTicked = 1;
+          }
         }
+      } else {
+        for (i=0 ; i<MotorCount ; i++) {
+          if (((gblMotorONOFF >> i) & 1) == ON) {
+            if (gblMtrDuty[i] > 0) {
+              if (((gblMotorMode >> i) & 1) == MOTOR_NORMAL) {
+                if (((gblMotorDir >> i) & 1)){
+                  output_high(MotorCWPins[i]);
+                } else {
+                  output_high(MotorCCPins[i]);
+                }
+              } else {
+                output_high(MotorCCPins[i]);
+              }
+            }
+          }
+        }
+      }
+      minDuty = 255;
+      for (i=0;i<=MotorCount;i++) {
+        if ((minDuty >= gblMtrDuty[i]) && !(((gblDutyCycleFlag >> i) & 1))) {
+          minDuty = gblMtrDuty[i];
+          nextDutyIndex = i;
+        }
+      }
+      gblDutyCycleFlag |= (1<<nextDutyIndex);
+      if (gblTimer0Counter < MotorCount){
+        periodTilNextInterrupt = minDuty - gblMtrDuty[gblCurrentDutyIndex];
+      } else {
+        periodTilNextInterrupt = minDuty;
+      }
+      gblCurrentDutyIndex = nextDutyIndex;
+      if (gblTimer0Counter == MotorCount-1){
+        gblDutyCycleFlag = 0;
+      }
+      if (gblTimer0Counter < MotorCount){
+        gblTimer0Counter++;
+      } else {
+         gblTimer0Counter = 0;
+      }
+    } while ((periodTilNextInterrupt == 0) && (gblTimer0Counter > 0));
+    if (gblTimer0Counter == 0) {
+      gblSlowBurstModeTimerHasTicked=1;
     }
-    set_rtcc(255 - periodTilNextInterrupt);
+  }
+  set_rtcc(255-periodTilNextInterrupt);
 }
 
 #int_timer1
@@ -169,11 +171,9 @@ void timer1ISR() {
     if (CMD_STATE != WAITING_FOR_FIRST_HEADER) {
         gblCmdTimeOut++;
     }
-
     if (gblWaitCounter > 0) {
         gblWaitCounter--;
     }
-
     if (input (RUN_BUTTON)) {
         if (!gblBtn1AlreadyPressed) {
             gblButtonPressed = !gblButtonPressed;
@@ -184,8 +184,7 @@ void timer1ISR() {
                 srand (gblTimer);
                 output_high (RUN_LED);
                 //leitura da regiao onde começara o codigo logo
-                gblMemPtr = (read_program_eeprom(RUN_BUTTON_BASE_ADDRESS) << 8)
-                                + read_program_eeprom(RUN_BUTTON_BASE_ADDRESS + 2);
+                gblMemPtr = (read_program_eeprom(RUN_BUTTON_BASE_ADDRESS) << 8) + read_program_eeprom(RUN_BUTTON_BASE_ADDRESS + 2);
                 gblMemPtr *= 2;
                 gblStkPtr = 0;
                 gblInputStkPtr = 0;
@@ -199,28 +198,11 @@ void timer1ISR() {
     } else if (gblBtn1AlreadyPressed) {
         gblBtn1AlreadyPressed = 0;
     }
-
     set_timer1 (T1_COUNTER);
 }
 
 #int_timer2
 void timer2ISR() {
-}
-
-short getBit(int InByte, int BitNo) {
-    return ((InByte >> BitNo) & 1);
-}
-
-void setBit(int *InByte, int BitNo) {
-    *InByte |= (1 << BitNo);
-}
-
-void clearBit(int *InByte, int BitNo) {
-    *InByte &= ~(1 << BitNo);
-}
-
-void TalkToMotor(int MotorBits) {
-    gblActiveMotors = MotorBits;
 }
 
 void MotorControl(int MotorCmd) {
@@ -294,114 +276,87 @@ void ChangeMotorPower(int delta) {
 }
 
 void SetMotorMode(int motorMode) {
-    int i;
-    for (i = 0; i < MotorCount; i++) {
-        if ((gblActiveMotors >> i) & 1)
-            if (motorMode == MOTOR_NORMAL)
-                clearBit(&gblMotorMode, i);
-            else
-                setBit(&gblMotorMode, i);
-    }
+   int i;
+   for (i=0;i<MotorCount;i++) {
+      if ((gblActiveMotors >> i) & 1){
+        if (motorMode == MOTOR_NORMAL){
+           gblMotorMode &= ~(1<<i);
+        } else {
+          gblMotorMode |= (1<<i);
+        }
+      }
+   }
 }
 
 void ENHigh(int MotorNo) {
-    //   int foo;
-    //  foo = MotorNo - MotorNo%2;
-    output_high (MotorENPins[MotorNo]);
-    //if (foo == 0) {
-    output_high (MOTOR_AB_EN);
-    //} else {
-    output_high (MOTOR_CD_EN);
-    //}
+   output_high(MotorENPins[MotorNo]);
+   output_high(MOTOR_AB_EN);
+   output_high(MOTOR_CD_EN);
 }
 
 void ENLow(int MotorNo) {
-    int foo;
-    output_low (MotorENPins[MotorNo]);
-    if (MotorNo % 2) {
-        foo = MotorNo - 1;
-    } else {
-        foo = MotorNo + 1;
-    }
-    if (!(getBit(gblMotorONOFF, foo))) {
-        return;
-    }
-
-    if (MotorNo < 2) {
-        output_low (MOTOR_AB_EN);
-        return;
-    } else {
-        output_low (MOTOR_CD_EN);
-        return;
-    }
+  int foo;
+  output_low(MotorENPins[MotorNo]);
+  if(MotorNo%2){
+    foo=MotorNo-1;
+  }else{
+    foo=MotorNo+1;
+  }
+  if (!((gblMotorONOFF >> foo) & 1)){
+    return;
+  }
+  if (MotorNo<2){
+    output_low(MOTOR_AB_EN);
+  } else {
+    output_low(MOTOR_CD_EN);
+  }
 }
 
 void MotorON(int MotorNo) {
-    int16 MtrCC, MtrCW;
-    MtrCW = MotorCWPins[MotorNo];
-    MtrCC = MotorCCPins[MotorNo];
-    if (getBit(gblMotorDir, MotorNo)) {
-        output_low(MtrCC);
-        output_high(MtrCW);
-    } else {
-        output_high(MtrCC);
-        output_low(MtrCW);
-    }
-    ENHigh(MotorNo);
-    setBit(&gblMotorONOFF, MotorNo);
+   if ((gblMotorDir >> MotorNo) & 1) {
+      output_low(MotorCCPins[MotorNo]);
+      output_high(MotorCWPins[MotorNo]);
+   } else {
+      output_high(MotorCCPins[MotorNo]);
+      output_low(MotorCWPins[MotorNo]);
+   }
+   ENHigh(MotorNo);
+   gblMotorONOFF |= (1<<MotorNo);
 }
 
 void MotorOFF(int MotorNo) {
-    int16 MtrCC, MtrCW;
-    MtrCW = MotorCWPins[MotorNo];
-    MtrCC = MotorCCPins[MotorNo];
-    output_high(MtrCC);
-    output_high(MtrCW);
-    output_low (MotorENPins[MotorNo]);
-    ENLow(MotorNo);
-    clearBit(&gblMotorONOFF, MotorNo);
+  output_high(MotorCCPins[MotorNo]);
+  output_high(MotorCWPins[MotorNo]);
+  output_low(MotorENPins[MotorNo]);
+  ENLow(MotorNo);
+  gblMotorONOFF &= ~(1<<MotorNo);
+  
 }
 
 void MotorRD(int MotorNo) {
-    int16 MtrCC, MtrCW;
-    MtrCW = MotorCWPins[MotorNo];
-    MtrCC = MotorCCPins[MotorNo];
-    if (getBit(gblMotorDir, MotorNo)) {
-        output_low(MtrCW);
-        output_high(MtrCC);
-        clearBit(&gblMotorDir, MotorNo);
-    } else {
-        output_high(MtrCW);
-        output_low(MtrCC);
-        setBit(&gblMotorDir, MotorNo);
-    }
+   if ((gblMotorDir >> MotorNo) & 1){
+     MotorThatWay(MotorNo);
+   } else {
+     MotorThisWay(MotorNo);
+   }
 }
 
 void MotorThisWay(int MotorNo) {
-    int16 MtrCC, MtrCW;
-    MtrCW = MotorCWPins[MotorNo];
-    MtrCC = MotorCCPins[MotorNo];
-    setBit(&gblMotorDir, MotorNo);
-    output_low(MtrCC);
-    output_high(MtrCW);
+  output_high(MotorCWPins[MotorNo]);
+  output_low(MotorCCPins[MotorNo]);  
+  gblMotorDir |= (1<<MotorNo);
 }
 
 void MotorThatWay(int MotorNo) {
-    int16 MtrCC, MtrCW;
-    MtrCW = MotorCWPins[MotorNo];
-    MtrCC = MotorCCPins[MotorNo];
-    clearBit(&gblMotorDir, MotorNo);
-    output_low(MtrCW);
-    output_high(MtrCC);
+  output_low(MotorCWPins[MotorNo]);
+  output_high(MotorCCPins[MotorNo]);
+  gblMotorDir &= ~(1<<MotorNo);
 }
 
 void MotorCoast(int MotorNo) {
-    int16 MtrCC, MtrCW;
-    MtrCW = MotorCWPins[MotorNo];
-    MtrCC = MotorCCPins[MotorNo];
-    clearBit(&gblMotorONOFF, MotorNo);
-    output_low(MtrCW);
-    output_low(MtrCC);
+  output_low(MotorCWPins[MotorNo]);
+  output_low(MotorCCPins[MotorNo]);
+  gblMotorONOFF &= ~(1<<MotorNo);
 }
 
 void miscControl(int cur_param, int cur_ext, int cur_ext_byte) {
@@ -614,13 +569,12 @@ void flashWrite(int16 InByte) {
 void ProcessInput() {
     int InByte, buff_status;
     int1 doNotStopRunningProcedure;
+
     while ((buff_status = readUsbBuffer(&InByte)) == USB_SUCCESS) {
         gblCmdTimeOut = 0;
         gblMostRecentlyReceivedByte = InByte;
         gblNewByteHasArrivedFlag = 1;
-
         printf(usb_cdc_putc, "%c", InByte);
-
         switch (CMD_STATE) {
         case WAITING_FOR_FIRST_HEADER:
             switch (InByte) {
@@ -819,7 +773,7 @@ void main() {
                 printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
                 break;
             case CMD_TALK_TO_MOTOR:
-                TalkToMotor (gbl_cur_ext_byte);
+                gblActiveMotors = gbl_cur_ext_byte;
                 printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
                 break;
             case CMD_BURST_MODE:
