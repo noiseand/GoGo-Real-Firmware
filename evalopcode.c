@@ -403,22 +403,6 @@ void evalOpcode(unsigned char opcode) {
          gblRecordPtr = 0;
          break;
 
-         /////////////////////////////////////////////////////////////////
-         //  Due to the PIC's memory architecture, we need to split this
-         //  procedure so that it isn't too big to fit one memory segment.
-      default:
-         evalOpcode2(opcode);
-   };
-
-}
-
-#separate void evalOpcode2(unsigned char opcode) {
-
-int i=0;
-int16 opr1, opr2;
-
-
-switch (opcode) {
 case  WHEN:
    break;
 case  WHENOFF:

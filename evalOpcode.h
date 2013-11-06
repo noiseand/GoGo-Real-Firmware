@@ -40,9 +40,3 @@
 //    Robbie Berg
 //
 /////////////////////////////////////////////////////
-
-
-
-
-
-#separate void evalOpcode2(unsigned char opcode);
