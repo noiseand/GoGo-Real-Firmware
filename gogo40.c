@@ -26,7 +26,6 @@
 #include <GOGO40.H>
 #include "gogoreal.h"
 #include "global_variables.h"
-#include "logovm.c"
 #include "evalOpcode.c"      // This is the Opcode evaluator
 
 #use fast_io(A)
@@ -68,6 +67,31 @@ unsigned int16 inputPop(void) {
 void version() {
     printf(usb_cdc_putc, "4");
 }
+
+void sendBytes(unsigned int16 memPtr, unsigned int16 count) {
+    while (count-- > 0){
+        printf(usb_cdc_putc,"%c",read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + memPtr++));
+    }
+
+}
+
+unsigned int16 fetchNextOpcode() {
+    unsigned int16 opcode;
+
+    // if an ONFOR command was launched we must turn motor off before
+    // continuing. When gblONFORNeedsToFinish is falged, we simulate
+    // a motor off command.
+    if (gblONFORNeedsToFinish) {
+        gblONFORNeedsToFinish = 0;
+        return(M_OFF);
+    } else {
+        opcode = read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
+        gblMemPtr+=2;
+    }
+
+    return opcode;
+}
+
 
 #int_rtcc
 void clock_isr() {
