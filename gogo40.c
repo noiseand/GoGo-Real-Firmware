@@ -513,6 +513,8 @@ void initBoard() {
     output_low(MOTOR_CD_EN);
     output_low(RUN_LED);
     output_low(USER_LED);
+    output_low(PIN_C0);
+    output_low(PIN_C1);
     for (i = 0, j = 0; i < MotorCount; i++) {
         output_low (MotorENPins[i]);
         output_low (MotorCWPins[i]);
