@@ -22,7 +22,6 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
-
 /////////////////////////////////////////////////////
 //
 //  Logo Virtual Machine
@@ -40,32 +39,26 @@
 //
 /////////////////////////////////////////////////////
 
-
-
-
-
-
-
 void sendBytes(unsigned int16 memPtr, unsigned int16 count) {
-	while (count-- > 0)
-		printf(usb_cdc_putc,"%c",read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + memPtr++));
+    while (count-- > 0){
+        printf(usb_cdc_putc,"%c",read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + memPtr++));
+    }
 
 }
 
-
 unsigned int16 fetchNextOpcode() {
-	unsigned int16 opcode;
+    unsigned int16 opcode;
 
-	// if an ONFOR command was launched we must turn motor off before
-	// continuing. When gblONFORNeedsToFinish is falged, we simulate
-	// a motor off command.
-	if (gblONFORNeedsToFinish) {
-		gblONFORNeedsToFinish = 0;
-		return(M_OFF);
-	} else {
-		opcode = read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
-		gblMemPtr+=2;
-	}
+    // if an ONFOR command was launched we must turn motor off before
+    // continuing. When gblONFORNeedsToFinish is falged, we simulate
+    // a motor off command.
+    if (gblONFORNeedsToFinish) {
+        gblONFORNeedsToFinish = 0;
+        return(M_OFF);
+    } else {
+        opcode = read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
+        gblMemPtr+=2;
+    }
 
-	return opcode;
+    return opcode;
 }

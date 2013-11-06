@@ -44,8 +44,6 @@ void beep();
 void SetBurstMode(int SensorBits, int Mode);
 void DoSensorStuff();
 unsigned int16 readSensor(int sensorNo);
-long getSensorVal();
-void switchAdcChannel(int channelNo);
 
 void ProcessInput();
 void ProcessRFInput();
