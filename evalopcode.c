@@ -71,7 +71,8 @@ void evalOpcode(unsigned char opcode) {
         // Pop the procedure inputs from the main data stack and move them
         // to the input stack
         for (i = 0; i < opr1; i++) {
-            inputPush (stkPop());}
+            inputPush (stkPop());
+        }
 
         inputPush (gblStkPtr); // save the data stack pointer (we use this with STOP opcode to clear the
         // data stack of the current procedure.
@@ -166,21 +167,25 @@ void evalOpcode(unsigned char opcode) {
         // return to the parent procedure
     case STOP:
     case OUTPUT:
-        if (opcode == OUTPUT)
+        if (opcode == OUTPUT){
             genPurpose = stkPop(); // this is the output value
+        }
         opr1 = inputPop();  // this is the proc-input stack base address
         gblMemPtr = inputPop(); // this is the return address
         opr2 = inputPop();  // this is the data stack index;
         // remove any remaining data that belongs to the current procedure from the data stack
         // Usually this is important for the STOP opcode.
-        while (gblStkPtr > opr2)
+        while (gblStkPtr > opr2){
             stkPop();
+        }
         // remove the procedure inputs from the input stack
-        while (gblInputStkPtr > opr1)
+        while (gblInputStkPtr > opr1){
             inputPop();
+        }
         // Output will push the output to the stack
-        if (opcode == OUTPUT)
+        if (opcode == OUTPUT){
             stkPush (genPurpose);
+        }
         break;
 
     case REPEAT:
