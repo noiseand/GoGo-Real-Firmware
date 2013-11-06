@@ -56,8 +56,7 @@ int16 gblFlashBaseAddress; // where the flash buffer shuld be written to in the 
 int ttTimer0 = 0; 
 
 
-int   gblStkPtr,   // ptr to the top of the data stack
-gblErrFlag;  // error flag
+int   gblStkPtr;   // ptr to the top of the data stack
 unsigned int16 gblStack[STACK_SIZE];
 
 int   gblInputStkPtr;   // ptr to the top of the procedure input stack

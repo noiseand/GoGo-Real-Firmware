@@ -491,7 +491,6 @@ void init_variables() {
    gblLogoIsRunning=0;
    gblStkPtr=0;
    gblInputStkPtr=0;
-   gblErrFlag=0;
    gblRecordPtr = read_program_eeprom(MEM_PTR_LOG_BASE_ADDRESS);
 }
 
