@@ -24,8 +24,6 @@
 
 
 
-#define STACK_SIZE      		32
-#define INPUT_STACK_SIZE		32
 
 
 

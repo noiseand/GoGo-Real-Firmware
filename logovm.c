@@ -41,8 +41,7 @@
 /////////////////////////////////////////////////////
 
 
-#include <evalOpcode.c>      // This is the Opcode evaluator
-#include <stack.c>         // Push/Pop functions for Op-code execution
+
 
 
 

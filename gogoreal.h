@@ -16,11 +16,11 @@ void evalOpcode(unsigned char opcode);
 void setHigh(IOPointer Pin);
 void setLow(IOPointer Pin);
 int  readPin(IOPointer Pin);
-
+void flashSetWordAddress(int16 address);
 short getBit(int InByte, int BitNo);
 void setBit(int *InByte, int BitNo);
 void clearBit(int *InByte, int BitNo);
-
+void flashWrite(int16 InByte);
 void Ping(int Param);
 void TalkToMotor(int MotorBits);
 void MotorControl(int MotorCmd);

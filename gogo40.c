@@ -21,13 +21,19 @@
 // Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "bootloader.h"
 #case
+#include "stdlib.h"
+
 #include <GOGO40.H>
-#include "stack.h"
 #include "gogoreal.h"
 #include "global_variables.h"
+#include "logovm.h"
 
-#include <logovm.h>
-#include <stdlib.H>
+#include "logovm.c"
+#include "stack.h"
+#include "evalOpcode.h"
+#include "memoryMap.h"
+#include "evalOpcode.c"      // This is the Opcode evaluator
+#include "stack.c"         // Push/Pop functions for Op-code execution
 
 #use fast_io(A)
 #use fast_io(B)
@@ -35,16 +41,7 @@
 #use fast_io(D)
 #use fast_io(E)
 
-#define defaultPort      0
-#define channelSwitchDelay   50   // delay time in us after switching adc channels
-// Don't decrease this value without testing.
-// If the delay is too short (i.e. 10us) the adc won't
-// have enough time to stabilize before reading the
-// next channel.
-#define T1_COUNTER      7287
 
-#define  CMD_TIMEOUT_PERIOD  2     // determins how long befor the board will reset
-// the command state. Units in 1/10 of a second
 
 
 void version()
@@ -860,4 +857,4 @@ void main() {
    }
 }
 
-#include <logovm.c>
+

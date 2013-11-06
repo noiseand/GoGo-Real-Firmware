@@ -1,6 +1,6 @@
 # Object files
 *.o
-
+*.hex
 # Libraries
 *.lib
 *.a
