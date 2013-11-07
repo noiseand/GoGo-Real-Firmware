@@ -190,7 +190,7 @@ void timer1ISR() {
             if (!gblLogoIsRunning) {
                 srand (gblTimer);
                 output_high (RUN_LED);
-                //leitura da regiao onde comeÃ§ara o codigo logo
+                //leitura da regiao onde começara o codigo logo
                 gblMemPtr = (read_program_eeprom(RUN_BUTTON_BASE_ADDRESS) << 8) + read_program_eeprom(RUN_BUTTON_BASE_ADDRESS + 2);
                 gblMemPtr *= 2;
                 gblStkPtr = 0;
@@ -302,21 +302,21 @@ void ENHigh(int MotorNo) {
 }
 
 void ENLow(int MotorNo) {
-  int foo;
-  output_low(MotorENPins[MotorNo]);
-  if(MotorNo%2){
-    foo=MotorNo-1;
-  }else{
-    foo=MotorNo+1;
-  }
-  if (!((gblMotorONOFF >> foo) & 1)){
-    return;
-  }
-  if (MotorNo<2){
-    output_low(MOTOR_AB_EN);
-  } else {
-    output_low(MOTOR_CD_EN);
-  }
+    int foo;
+    output_low(MotorENPins[MotorNo]);
+    if(MotorNo%2){
+        foo=MotorNo-1;
+    }else{
+        foo=MotorNo+1;
+    }
+    if (!((gblMotorONOFF >> foo) & 1)){
+        return;
+    }
+    if (MotorNo<2){
+        output_low(MOTOR_AB_EN);
+    } else {
+        output_low(MOTOR_CD_EN);
+    }
 }
 
 void MotorON(int MotorNo) {
@@ -411,25 +411,11 @@ void beep() {
     set_pwm1_duty(0);
 }
 
-void DoSensorStuff() {
-    long SensorVal;
-
-    if (!gblSlowBurstMode || gblSlowBurstModeTimerHasTicked) {
-        if ((gblBurstModeBits >> gblBurstModeCounter) & 1) {
-            SensorVal = readSensor(gblBurstModeCounter);
-            printf(usb_cdc_putc, "%c%c%c", 0x0c,(gblBurstModeCounter << 5) | (SensorVal >> 8),SensorVal & 0xff);
-        }
-        gblBurstModeCounter = (gblBurstModeCounter + 1) % 8;
-        gblSlowBurstModeTimerHasTicked = 0;
-    }
-}
-
 void SetBurstMode(int SensorBits, int Mode) {
     gblBurstModeBits = SensorBits;
     if (Mode > 0){
         gblSlowBurstMode = 1;
-    }
-    else{
+    } else{
         gblSlowBurstMode = 0;
     }
 }
@@ -465,14 +451,7 @@ int readUsbBuffer(int *charPtr) {
     return (errorCode);
 }
 
-void init_variables() {
-    gblBurstModeBits = 0;
-    CMD_STATE = WAITING_FOR_FIRST_HEADER;
-    gblLogoIsRunning = 0;
-    gblStkPtr = 0;
-    gblInputStkPtr = 0;
-    gblRecordPtr = read_program_eeprom(MEM_PTR_LOG_BASE_ADDRESS);
-}
+
 
 void intro() {
     set_pwm1_duty(50);
@@ -503,43 +482,7 @@ void Halt() {
     }
 }
 
-void initBoard() {
-    int i, j;
 
-    gblActiveMotors = 0;
-    set_tris_a (PIC_TRIS_A);
-    set_tris_b (PIC_TRIS_B);
-    set_tris_c (PIC_TRIS_C);
-    set_tris_d (PIC_TRIS_D);
-    set_tris_e (PIC_TRIS_E);
-    setup_port_a (AN0_TO_AN7);
-    setup_adc (ADC_CLOCK_INTERNAL);
-    gblCurSensorChannel = defaultPort;
-    set_adc_channel (defaultPort);
-    output_low(MOTOR_AB_EN);
-    output_low(MOTOR_CD_EN);
-    output_low(RUN_LED);
-    output_low(USER_LED);
-    output_low(PIN_C0);
-    output_low(PIN_C1);
-    for (i = 0, j = 0; i < MotorCount; i++) {
-        output_low (MotorENPins[i]);
-        output_low (MotorCWPins[i]);
-        output_low (MotorCCPins[i]);
-    }
-    setup_ccp1 (CCP_PWM);
-    setup_timer_1(T1_INTERNAL | T1_DIV_BY_8);
-    setup_timer_2(T2_DIV_BY_16, 250, 16);
-    enable_interrupts (GLOBAL);
-    setup_timer_0(RTCC_INTERNAL | RTCC_DIV_256 | RTCC_8_BIT);
-    set_rtcc(0);
-    enable_interrupts (INT_RTCC);
-    enable_interrupts (INT_TIMER1);
-    enable_interrupts (INT_TIMER2);
-    enable_interrupts (INT_RDA);
-    set_timer1 (T1_COUNTER);
-    intro();
-}
 
 void flashSetWordAddress(int16 address) {
     gblFlashBaseAddress = address;
@@ -602,7 +545,7 @@ void ProcessInput() {
                 break;
             case RUN:
                 doNotStopRunningProcedure = 1;
-                output_high (RUN_LED);
+                output_high(RUN_LED);
                 gblWaitCounter = 0;
                 gblONFORNeedsToFinish = 0;
                 gblStkPtr = 0;
@@ -745,13 +688,101 @@ void ReadUsb() {
     }
 }
 
+
+void init_variables() {
+    CMD_STATE = WAITING_FOR_FIRST_HEADER;
+    gbl_cur_cmd= 0;
+    gbl_cur_param= 0;
+    gbl_cur_ext= 0;
+    gbl_cur_ext_byte= 0;
+    gblBurstModeBits = 0;
+    gblBurstModeCounter=0;
+    gblSlowBurstMode=0;
+    gblSlowBurstModeTimerHasTicked=0;
+    gblCurSensorChannel = 0;
+    gblMotorMode=0b00000000;
+    gblActiveMotors= 0;
+    gblMotorDir=0;
+    gblMotorONOFF = 0;
+    gblTimer0Counter = MotorCount;
+    gblDutyCycleFlag = 0;
+    gblCurrentDutyIndex = 0;
+    gblMostRecentlyReceivedByte = 0;
+    gblNewByteHasArrivedFlag = 0;
+    gblLogoIsRunning = 0;
+    gblButtonPressed = 0;
+    gblBtn1AlreadyPressed = 0;
+    gblWaitCounter = 0;
+    gblTimer = 0;
+    gblCmdTimeOut = 0;
+    gblUsbBufferPutIndex=0;
+    gblUsbBufferGetIndex=0;
+    gblUsbBufferIsFull=FALSE;
+    HILOWHasArrivedFlag = 0;
+    adressHILOW = 0;
+    gblFlashBuffer[getenv("FLASH_ERASE_SIZE")];
+    gblFlashBufferPtr=0;
+    gblFlashBaseAddress = 0;
+    ttTimer0 = 0; 
+    gblStkPtr = 0;
+    gblInputStkPtr = 0;
+    gblInputStack[INPUT_STACK_SIZE];
+    gblRecordPtr = read_program_eeprom(MEM_PTR_LOG_BASE_ADDRESS);
+    gblMemPtr = 0;
+    gblRWCount = 0;
+    gblLoopAddress=0;
+    gblRepeatCount=0;
+    gblONFORNeedsToFinish=0;
+    gblCurSensorChannel = defaultPort;
+    
+    int i;
+    for (i = 0; i < MotorCount+1; i++) {
+        gblMtrDuty[i] = 0xff;
+    }
+}
+
+void initBoard() {
+    init_variables();
+    int i;
+    set_tris_a (PIC_TRIS_A);
+    set_tris_b (PIC_TRIS_B);
+    set_tris_c (PIC_TRIS_C);
+    set_tris_d (PIC_TRIS_D);
+    set_tris_e (PIC_TRIS_E);
+    setup_port_a (AN0_TO_AN7);
+    setup_adc (ADC_CLOCK_INTERNAL);
+    set_adc_channel (defaultPort);
+    output_low(MOTOR_AB_EN);
+    output_low(MOTOR_CD_EN);
+    output_low(RUN_LED);
+    output_low(USER_LED);
+    output_low(PIN_C0);
+    output_low(PIN_C1);
+    for (i = 0; i < MotorCount; i++) {
+        output_low (MotorENPins[i]);
+        output_low (MotorCWPins[i]);
+        output_low (MotorCCPins[i]);
+    }
+    setup_ccp1 (CCP_PWM);
+    setup_timer_1(T1_INTERNAL | T1_DIV_BY_8);
+    setup_timer_2(T2_DIV_BY_16, 250, 16);
+    enable_interrupts (GLOBAL);
+    setup_timer_0(RTCC_INTERNAL | RTCC_DIV_256 | RTCC_8_BIT);
+    set_rtcc(0);
+    enable_interrupts (INT_RTCC);
+    enable_interrupts (INT_TIMER1);
+    enable_interrupts (INT_TIMER2);
+    enable_interrupts (INT_RDA);
+    set_timer1 (T1_COUNTER);
+    intro();
+}
+
 void main() {
+    initBoard();
+        
     int16 SensorVal;
     int16 uploadLen, counter;
     int16 foo;
-
-    init_variables();
-    initBoard();
 
     usb_cdc_init();
     usb_init();
@@ -809,12 +840,19 @@ void main() {
             }
             CMD_STATE = WAITING_FOR_FIRST_HEADER;
         } else {
-            DoSensorStuff();
+            if (!gblSlowBurstMode || gblSlowBurstModeTimerHasTicked) {
+                if ((gblBurstModeBits >> gblBurstModeCounter) & 1) {
+                    long SensorVal = readSensor(gblBurstModeCounter);
+                    printf(usb_cdc_putc, "%c%c%c", 0x0c,(gblBurstModeCounter << 5) | (SensorVal >> 8),SensorVal & 0xff);
+                }
+                gblBurstModeCounter = (gblBurstModeCounter + 1) % 8;
+                gblSlowBurstModeTimerHasTicked = 0;
+            }
         }
 
         if (gblLogoIsRunning) {
             if (!gblWaitCounter){
-                evalOpcode (fetchNextOpcode());
+                evalOpcode(fetchNextOpcode());
             }
         }
         if (gblCmdTimeOut > CMD_TIMEOUT_PERIOD) {
