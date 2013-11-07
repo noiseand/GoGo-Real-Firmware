@@ -33,7 +33,7 @@
 #include <GOGO40.H>
 #include "gogoreal.h"
 #include "global_variables.h"
-#include "evalOpcode.c"      // This is the Opcode evaluator
+#include "evalOpcode.c"
 
 #use fast_io(A)
 #use fast_io(B)
@@ -528,47 +528,47 @@ void ProcessInput() {
         gblNewByteHasArrivedFlag = 1;
         printf(usb_cdc_putc, "%c", InByte);
         switch (CMD_STATE) {
-        case WAITING_FOR_FIRST_HEADER:
-            switch (InByte) {
-            case InHeader1:
-                CMD_STATE = WAITING_FOR_SECOND_HEADER;
-                doNotStopRunningProcedure = 1;
+            case WAITING_FOR_FIRST_HEADER:
+                switch (InByte) {
+                    case InHeader1:
+                        CMD_STATE = WAITING_FOR_SECOND_HEADER;
+                        doNotStopRunningProcedure = 1;
+                        break;
+                    case SET_PTR:
+                        CMD_STATE = SET_PTR_HI_BYTE;
+                        break;
+                    case READ_BYTES:
+                        CMD_STATE = READ_BYTES_COUNT_HI;
+                        break;
+                    case WRITE_BYTES:
+                        CMD_STATE = WRITE_BYTES_COUNT_HI;
+                        break;
+                    case RUN:
+                        doNotStopRunningProcedure = 1;
+                        output_high(RUN_LED);
+                        gblWaitCounter = 0;
+                        gblONFORNeedsToFinish = 0;
+                        gblStkPtr = 0;
+                        gblInputStkPtr = 0;
+                        gblNewByteHasArrivedFlag = 0;
+                        gblLogoIsRunning = 1;
+                        break;
+                    case CRICKET_CHECK:
+                        CMD_STATE = CRICKET_NAME;
+                        break;
+                };
+                if (!doNotStopRunningProcedure) {
+                    gblLogoIsRunning = 0;
+                    gblWaitCounter = 0;
+                    output_low (RUN_LED);
+                    gblBurstModeBits = 0;
+                }
+                doNotStopRunningProcedure = 0;
                 break;
-            case SET_PTR:
-                CMD_STATE = SET_PTR_HI_BYTE;
-                break;
-            case READ_BYTES:
-                CMD_STATE = READ_BYTES_COUNT_HI;
-                break;
-            case WRITE_BYTES:
-                CMD_STATE = WRITE_BYTES_COUNT_HI;
-                break;
-            case RUN:
-                doNotStopRunningProcedure = 1;
-                output_high(RUN_LED);
-                gblWaitCounter = 0;
-                gblONFORNeedsToFinish = 0;
-                gblStkPtr = 0;
-                gblInputStkPtr = 0;
-                gblNewByteHasArrivedFlag = 0;
-                gblLogoIsRunning = 1;
-                break;
-            case CRICKET_CHECK:
-                CMD_STATE = CRICKET_NAME;
-                break;
-            }
-            ;
-            if (!doNotStopRunningProcedure) {
-                gblLogoIsRunning = 0;
-                gblWaitCounter = 0;
-                output_low (RUN_LED);
-                gblBurstModeBits = 0;
-            }
-            doNotStopRunningProcedure = 0;
-            break;
             case WAITING_FOR_SECOND_HEADER:
-                if (InByte == InHeader2)
+                if (InByte == InHeader2){
                     CMD_STATE = WAITING_FOR_CMD_BYTE;
+                }
                 break;
             case WAITING_FOR_CMD_BYTE:
                 gbl_cur_cmd = (InByte & 0b11100000) >> 5;
@@ -594,8 +594,7 @@ void ProcessInput() {
                 gblMemPtr = gblMemPtr | InByte;
                 CMD_STATE = WAITING_FOR_FIRST_HEADER;
                 if ((gblMemPtr & 0xff0) == 0xff0) {
-                    gblMemPtr = (RUN_BUTTON_BASE_ADDRESS + ((gblMemPtr & 0xf) * 2))
-                                - FLASH_USER_PROGRAM_BASE_ADDRESS;
+                    gblMemPtr = (RUN_BUTTON_BASE_ADDRESS + ((gblMemPtr & 0xf) * 2)) - FLASH_USER_PROGRAM_BASE_ADDRESS;
                     set_pwm1_duty(50);
                 } else {
                     gblMemPtr *= 2;
@@ -622,7 +621,6 @@ void ProcessInput() {
                 break;
             case WRITE_BYTES_SENDING:
                 set_pwm1_duty(0);
-
                 if (HILOWHasArrivedFlag == 2) {
                     adressHILOW += InByte;
                     HILOWHasArrivedFlag = 0;
@@ -631,12 +629,12 @@ void ProcessInput() {
                         flashFlushBuffer();
                         CMD_STATE = WAITING_FOR_FIRST_HEADER;
                     }
-                } else {
-                    if (HILOWHasArrivedFlag == 1) {
-                        adressHILOW = (int16) InByte;
-                        adressHILOW <<= 8;
-                        HILOWHasArrivedFlag = 2;
-                    } else {
+                 } else {
+                     if (HILOWHasArrivedFlag == 1) {
+                         adressHILOW = (int16) InByte;
+                         adressHILOW <<= 8;
+                         HILOWHasArrivedFlag = 2;
+                     } else {
                         if (InByte == 128) {
                             HILOWHasArrivedFlag = 1;
                             adressHILOW = 0;
@@ -644,7 +642,7 @@ void ProcessInput() {
                             if (--gblRWCount < 1) {
                                 flashFlushBuffer();
                                 CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                            }
+                            }    
                         } else {
                             flashBufferedWrite(InByte);
                             if (--gblRWCount < 1) {
@@ -664,17 +662,16 @@ void ProcessInput() {
                 CMD_STATE = WAITING_FOR_FIRST_HEADER;
                 break;
         }
-        if (CMD_STATE == CMD_READY)
+        if (CMD_STATE == CMD_READY){
             break;
+        }
     }
-
     if (buff_status == USB_OVERFLOW) {
         CMD_STATE = WAITING_FOR_FIRST_HEADER;
     }
 }
 
 void ReadUsb() {
-
     while (usb_cdc_kbhit()) {
         if (gblUsbBufferIsFull == FALSE) {
             gblUsbBuffer[gblUsbBufferPutIndex] = usb_cdc_getc();
@@ -849,7 +846,6 @@ void main() {
                 gblSlowBurstModeTimerHasTicked = 0;
             }
         }
-
         if (gblLogoIsRunning) {
             if (!gblWaitCounter){
                 evalOpcode(fetchNextOpcode());
