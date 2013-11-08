@@ -171,8 +171,11 @@ void clock_isr() {
   set_rtcc(255-periodTilNextInterrupt);
 }
 
+//Timer1
+//Prescaler 1:1; TMR1 Preload = 53536; Actual Interrupt Time : 1 ms
 #int_timer1
 void timer1ISR() {
+    set_timer1 (T1_COUNTER);
     gblTimer++;
 
     if (CMD_STATE != WAITING_FOR_FIRST_HEADER) {
@@ -205,7 +208,6 @@ void timer1ISR() {
     } else if (gblBtn1AlreadyPressed) {
         gblBtn1AlreadyPressed = 0;
     }
-    set_timer1 (T1_COUNTER);
 }
 
 #int_timer2
@@ -761,7 +763,7 @@ void initBoard() {
         output_low (MotorCCPins[i]);
     }
     setup_ccp1 (CCP_PWM);
-    setup_timer_1(T1_INTERNAL | T1_DIV_BY_8);
+    setup_timer_1(T1_INTERNAL | T1_DIV_BY_1);
     setup_timer_2(T2_DIV_BY_16, 250, 16);
     enable_interrupts (GLOBAL);
     setup_timer_0(RTCC_INTERNAL | RTCC_DIV_256 | RTCC_8_BIT);

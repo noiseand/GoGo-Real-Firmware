@@ -25,7 +25,10 @@
 //*****  contact  Felipe Augusto Silva  *****************************************//
 //*****  email:  fel1310@hotmail.com   *****************************************//
 //******************************************************************************//
+#define T1_COUNTER      53536
 
+
+//old
 #define CMD_PING         0x00
 #define CMD_READ_SENSOR      0x01
 #define CMD_MOTOR_CONTROL   0x02
@@ -344,7 +347,7 @@
 // If the delay is too short (i.e. 10us) the adc won't
 // have enough time to stabilize before reading the
 // next channel.
-#define T1_COUNTER      7287
+
 
 #define  CMD_TIMEOUT_PERIOD  2     // determins how long befor the board will reset
 // the command state. Units in 1/10 of a second
