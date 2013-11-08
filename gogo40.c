@@ -172,7 +172,7 @@ void clock_isr() {
 }
 
 //Timer1
-//Prescaler 1:1; TMR1 Preload = 53536; Actual Interrupt Time : 1 ms
+//Prescaler 1:8; TMR1 Preload = 28036; Actual Interrupt Time : 25 ms
 #int_timer1
 void timer1ISR() {
     set_timer1 (T1_COUNTER);
@@ -185,28 +185,11 @@ void timer1ISR() {
         gblWaitCounter--;
     }
     if (input (RUN_BUTTON)) {
-        if (!gblBtn1AlreadyPressed) {
-            gblButtonPressed = !gblButtonPressed;
-            gblBtn1AlreadyPressed = 1;
-            gblWaitCounter = 0;
-            gblONFORNeedsToFinish = 0;
-            if (!gblLogoIsRunning) {
-                srand (gblTimer);
-                output_high (RUN_LED);
-                //leitura da regiao onde começara o codigo logo
-                gblMemPtr = (read_program_eeprom(RUN_BUTTON_BASE_ADDRESS) << 8) + read_program_eeprom(RUN_BUTTON_BASE_ADDRESS + 2);
-                gblMemPtr *= 2;
-                gblStkPtr = 0;
-                gblInputStkPtr = 0;
-                gblNewByteHasArrivedFlag = 0;
-                gblLogoIsRunning = 1;
-            } else {
-                gblLogoIsRunning = 0;
-                output_low (RUN_LED);
-            }
+        if(gblTimer - time_button_pressed > 15){ // 375 ms to wait a new press button
+            time_button_pressed = gblTimer;
+            start_stop_logo_machine = TRUE;
+            printf(usb_cdc_putc,"W");
         }
-    } else if (gblBtn1AlreadyPressed) {
-        gblBtn1AlreadyPressed = 0;
     }
 }
 
@@ -763,7 +746,7 @@ void initBoard() {
         output_low (MotorCCPins[i]);
     }
     setup_ccp1 (CCP_PWM);
-    setup_timer_1(T1_INTERNAL | T1_DIV_BY_1);
+    setup_timer_1(T1_INTERNAL | T1_DIV_BY_8);
     setup_timer_2(T2_DIV_BY_16, 250, 16);
     enable_interrupts (GLOBAL);
     setup_timer_0(RTCC_INTERNAL | RTCC_DIV_256 | RTCC_8_BIT);
@@ -847,6 +830,26 @@ void main() {
                 gblBurstModeCounter = (gblBurstModeCounter + 1) % 8;
                 gblSlowBurstModeTimerHasTicked = 0;
             }
+        }
+        if(start_stop_logo_machine){
+            if (gblLogoIsRunning){
+                gblONFORNeedsToFinish = 0;
+                gblLogoIsRunning = 0;
+                output_low (RUN_LED);
+            }else{
+                srand (gblTimer);
+                //leitura da regiao onde começara o codigo logo
+                gblMemPtr = (read_program_eeprom(RUN_BUTTON_BASE_ADDRESS) << 8) + read_program_eeprom(RUN_BUTTON_BASE_ADDRESS + 2);
+                gblMemPtr *= 2;
+                gblStkPtr = 0;
+                gblInputStkPtr = 0;
+                gblNewByteHasArrivedFlag = 0;
+                gblLogoIsRunning = 1;
+                output_high(RUN_LED);
+            }
+            gblWaitCounter = 0;
+            gblONFORNeedsToFinish = 0;
+            start_stop_logo_machine = FALSE;
         }
         if (gblLogoIsRunning) {
             if (!gblWaitCounter){

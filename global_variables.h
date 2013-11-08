@@ -22,6 +22,12 @@
 //  Global Variables
 /////////////////////////////////////////////////////////////////
 
+int1 gblLogoIsRunning = 0;
+unsigned int16 time_button_pressed = 0; // last time that run button was pressed 
+int1 start_stop_logo_machine = FALSE;
+unsigned int16 gblWaitCounter =0; // wait to execute logo code
+
+//old
 int16  MotorENPins [MotorCount]={  MTR1_EN, MTR2_EN, MTR3_EN, MTR4_EN};
 int16  MotorCWPins [MotorCount]={  MTR1_CW, MTR2_CW, MTR3_CW, MTR4_CW};
 int16  MotorCCPins [MotorCount]={  MTR1_CC, MTR2_CC, MTR3_CC, MTR4_CC};
@@ -43,10 +49,10 @@ unsigned int gblDutyCycleFlag = 0; // used to find the next duty cycle in timer0
 unsigned int gblCurrentDutyIndex = 0; // keeps track of the current duty cycle being used.// These two variables are for the NEWIR, IR commands in Cricket Logo // We replace the IR with the serial comm, of course.
 unsigned char gblMostRecentlyReceivedByte;
 int1 gblNewByteHasArrivedFlag = 0;
-int1 gblLogoIsRunning = 0;     // flags if logo procedures are runing
+     // flags if logo procedures are runing
 int1 gblButtonPressed = 0;    // flags when the run button is pressed
 int1 gblBtn1AlreadyPressed = 0;
-unsigned int16 gblWaitCounter =0;  // used for the wait cmd in Logo vm
+  // used for the wait cmd in Logo vm
 unsigned int16 gblTimer = 0;   // This is the timer for the TIMER and RESETT commands
 int gblCmdTimeOut = 0; // counter to make sure the command state is not stuck somewhere
 int gblUsbBuffer[USB_BUFFER_SIZE];
