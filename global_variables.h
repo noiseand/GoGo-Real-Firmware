@@ -50,8 +50,6 @@ unsigned int gblCurrentDutyIndex = 0; // keeps track of the current duty cycle b
 unsigned char gblMostRecentlyReceivedByte;
 int1 gblNewByteHasArrivedFlag = 0;
      // flags if logo procedures are runing
-int1 gblButtonPressed = 0;    // flags when the run button is pressed
-int1 gblBtn1AlreadyPressed = 0;
   // used for the wait cmd in Logo vm
 unsigned int16 gblTimer = 0;   // This is the timer for the TIMER and RESETT commands
 int gblCmdTimeOut = 0; // counter to make sure the command state is not stuck somewhere

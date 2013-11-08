@@ -672,6 +672,12 @@ void ReadUsb() {
 
 
 void init_variables() {
+    gblLogoIsRunning = 0;
+    time_button_pressed = 0; // last time that run button was pressed 
+    start_stop_logo_machine = FALSE;
+    gblWaitCounter =0; // wait to execute logo code
+    
+    
     CMD_STATE = WAITING_FOR_FIRST_HEADER;
     gbl_cur_cmd= 0;
     gbl_cur_param= 0;
@@ -692,8 +698,6 @@ void init_variables() {
     gblMostRecentlyReceivedByte = 0;
     gblNewByteHasArrivedFlag = 0;
     gblLogoIsRunning = 0;
-    gblButtonPressed = 0;
-    gblBtn1AlreadyPressed = 0;
     gblWaitCounter = 0;
     gblTimer = 0;
     gblCmdTimeOut = 0;
