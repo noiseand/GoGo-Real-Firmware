@@ -127,12 +127,6 @@
 #define MOTOR_AB_EN     PIN_B7   // controls the power to the motor chip
 #define MOTOR_CD_EN     PIN_D6   // controls the power to the motor chip
 
-#define USER_LED_ON      output_high(USER_LED)
-#define USER_LED_OFF     output_low(USER_LED)
-
-#define RUN_LED_ON      output_high(RUN_LED)
-#define RUN_LED_OFF     output_low(RUN_LED)
-
 
 #define WAITING_FOR_FIRST_HEADER   1
 #define WAITING_FOR_SECOND_HEADER   2

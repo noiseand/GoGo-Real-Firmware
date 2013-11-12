@@ -188,7 +188,6 @@ void timer1ISR() {
         if(gblTimer - time_button_pressed > 15){ // 375 ms to wait a new press button
             time_button_pressed = gblTimer;
             start_stop_logo_machine = TRUE;
-            printf(usb_cdc_putc,"W");
         }
     }
 }
@@ -355,19 +354,19 @@ void miscControl(int cur_param, int cur_ext, int cur_ext_byte) {
     switch (cur_param) {
     case MISC_USER_LED:
         if (cur_ext == TURN_USER_LED_ON) {
-            USER_LED_ON;
+            output_high(USER_LED);
         } else {
-            USER_LED_OFF;
+            output_low(USER_LED);
         }
         break;
     case MISC_BEEP:
         beep();
         break;
     case MISC_SET_PWM:
-        MotorControl (MTR_ON);
-        MotorControl (MTR_THISWAY);
-        SetMotorMode (MOTOR_SERVO);
+        MotorControl(MTR_THISWAY);
+        SetMotorMode(MOTOR_SERVO);
         SetMotorPower(cur_ext_byte);
+        MotorControl(MTR_ON);
         break;
     case MISC_UPLOAD_EEPROM:
         break;
@@ -440,27 +439,27 @@ int readUsbBuffer(int *charPtr) {
 
 void intro() {
     set_pwm1_duty(50);
-    USER_LED_ON;
-    RUN_LED_ON;
+    output_high(USER_LED);
+    output_high(RUN_LED);
     delay_ms(50);
     set_pwm1_duty(0);
     delay_ms(50);
-    USER_LED_OFF;
-    RUN_LED_OFF;
+    output_low(USER_LED);
+    output_low(RUN_LED);
     set_pwm1_duty(50);
     delay_ms(50);
     set_pwm1_duty(0);
     delay_ms(0);
-    USER_LED_ON;
-    RUN_LED_ON;
+    output_high(USER_LED);
+    output_high(RUN_LED);
     delay_ms(100);
-    USER_LED_OFF;
-    RUN_LED_OFF;
+    output_low(USER_LED);
+    output_low(RUN_LED);
 }
 
 void Halt() {
     while (1) {
-        output_high (RUN_LED);
+        output_high(RUN_LED);
         delay_ms(50);
         output_low(RUN_LED);
         delay_ms(500);
@@ -530,13 +529,7 @@ void ProcessInput() {
                         break;
                     case RUN:
                         doNotStopRunningProcedure = 1;
-                        output_high(RUN_LED);
-                        gblWaitCounter = 0;
-                        gblONFORNeedsToFinish = 0;
-                        gblStkPtr = 0;
-                        gblInputStkPtr = 0;
-                        gblNewByteHasArrivedFlag = 0;
-                        gblLogoIsRunning = 1;
+                        start_stop_logo_machine = 1;
                         break;
                     case CRICKET_CHECK:
                         CMD_STATE = CRICKET_NAME;
@@ -676,8 +669,6 @@ void init_variables() {
     time_button_pressed = 0; // last time that run button was pressed 
     start_stop_logo_machine = FALSE;
     gblWaitCounter =0; // wait to execute logo code
-    
-    
     CMD_STATE = WAITING_FOR_FIRST_HEADER;
     gbl_cur_cmd= 0;
     gbl_cur_param= 0;
@@ -735,9 +726,9 @@ void initBoard() {
     set_tris_c (PIC_TRIS_C);
     set_tris_d (PIC_TRIS_D);
     set_tris_e (PIC_TRIS_E);
-    setup_port_a (AN0_TO_AN7);
+    setup_port_a(AN0_TO_AN7);
     setup_adc (ADC_CLOCK_INTERNAL);
-    set_adc_channel (defaultPort);
+    set_adc_channel(defaultPort);
     output_low(MOTOR_AB_EN);
     output_low(MOTOR_CD_EN);
     output_low(RUN_LED);
@@ -749,17 +740,16 @@ void initBoard() {
         output_low (MotorCWPins[i]);
         output_low (MotorCCPins[i]);
     }
-    setup_ccp1 (CCP_PWM);
+    setup_ccp1(CCP_PWM);
     setup_timer_1(T1_INTERNAL | T1_DIV_BY_8);
     setup_timer_2(T2_DIV_BY_16, 250, 16);
-    enable_interrupts (GLOBAL);
     setup_timer_0(RTCC_INTERNAL | RTCC_DIV_256 | RTCC_8_BIT);
-    set_rtcc(0);
     enable_interrupts (INT_RTCC);
     enable_interrupts (INT_TIMER1);
     enable_interrupts (INT_TIMER2);
-    enable_interrupts (INT_RDA);
-    set_timer1 (T1_COUNTER);
+    set_rtcc(0);
+    set_timer1(T1_COUNTER);
+    enable_interrupts(GLOBAL);
     intro();
 }
 
@@ -772,7 +762,6 @@ void main() {
 
     usb_cdc_init();
     usb_init();
-    usb_task();
 
     while (1) {
         ReadUsb();
@@ -837,7 +826,6 @@ void main() {
         }
         if(start_stop_logo_machine){
             if (gblLogoIsRunning){
-                gblONFORNeedsToFinish = 0;
                 gblLogoIsRunning = 0;
                 output_low (RUN_LED);
             }else{
@@ -867,4 +855,5 @@ void main() {
 
     }
 }
+
 
