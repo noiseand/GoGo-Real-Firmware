@@ -352,40 +352,40 @@ void MotorCoast(int MotorNo) {
 
 void miscControl(int cur_param, int cur_ext, int cur_ext_byte) {
     switch (cur_param) {
-    case MISC_USER_LED:
-        if (cur_ext == TURN_USER_LED_ON) {
-            output_high(USER_LED);
-        } else {
-            output_low(USER_LED);
-        }
-        break;
-    case MISC_BEEP:
-        beep();
-        break;
-    case MISC_SET_PWM:
-        MotorControl(MTR_THISWAY);
-        SetMotorMode(MOTOR_SERVO);
-        SetMotorPower(cur_ext_byte);
-        MotorControl(MTR_ON);
-        break;
-    case MISC_UPLOAD_EEPROM:
-        break;
-    case MISC_I2C_SETUP:
-        switch (cur_ext) {
-        case I2C_START:
-            i2c_start();
+        case MISC_USER_LED:
+            if (cur_ext == TURN_USER_LED_ON) {
+                output_high(USER_LED);
+            } else {
+                output_low(USER_LED);
+            }
             break;
-        case I2C_STOP:
-            i2c_stop();
+        case MISC_BEEP:
+            beep();
             break;
-        case I2C_WRITE:
-            i2c_write(cur_ext_byte);
+        case MISC_SET_PWM:
+            MotorControl(MTR_THISWAY);
+            SetMotorMode(MOTOR_SERVO);
+            SetMotorPower(cur_ext_byte);
+            MotorControl(MTR_ON);
             break;
-        case I2C_READ:
-            i2c_read(0);
+        case MISC_UPLOAD_EEPROM:
             break;
-        }
-        break;
+        case MISC_I2C_SETUP:
+            switch (cur_ext) {
+                case I2C_START:
+                    i2c_start();
+                    break;
+                case I2C_STOP:
+                    i2c_stop();
+                    break;
+                case I2C_WRITE:
+                    i2c_write(cur_ext_byte);
+                    break;
+                case I2C_READ:
+                    i2c_read(0);
+                    break;
+            }
+            break;
     }
 }
 
@@ -534,11 +534,12 @@ void ProcessInput() {
                     case CRICKET_CHECK:
                         CMD_STATE = CRICKET_NAME;
                         break;
+
                 };
                 if (!doNotStopRunningProcedure) {
                     gblLogoIsRunning = 0;
                     gblWaitCounter = 0;
-                    output_low (RUN_LED);
+                    output_low(RUN_LED);
                     gblBurstModeBits = 0;
                 }
                 doNotStopRunningProcedure = 0;
@@ -762,43 +763,44 @@ void main() {
 
     usb_cdc_init();
     usb_init();
-
     while (1) {
         ReadUsb();
         ProcessInput();
         if (CMD_STATE == CMD_READY) {
             switch (gbl_cur_cmd) {
-            case CMD_PING:
-                printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                printf(usb_cdc_putc, "%c%c%c", 0x01, 0x30, 0x01);
-                break;
-            case CMD_Version:
-                version();
-                break;
-            case CMD_READ_SENSOR:
-                SensorVal = readSensor(gbl_cur_param);
-                printf(usb_cdc_putc, "%c%c%c%c", ReplyHeader1, ReplyHeader2,SensorVal >> 8, SensorVal & 0xff);
-                break;
-            case CMD_MOTOR_CONTROL:
-                MotorControl (gbl_cur_param);
-                printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                break;
-            case CMD_MOTOR_POWER:
-                SetMotorPower(gbl_cur_param);
-                printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                break;
-            case CMD_TALK_TO_MOTOR:
-                gblActiveMotors = gbl_cur_ext_byte;
-                printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                break;
-            case CMD_BURST_MODE:
-                SetBurstMode(gbl_cur_ext_byte, gbl_cur_ext);
-                printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                break;
-            case CMD_MISC_CONTROL:
-                miscControl(gbl_cur_param, gbl_cur_ext, gbl_cur_ext_byte);
-                printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                break;
+                case CMD_PING:
+                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
+                    printf(usb_cdc_putc, "%c%c%c", 0x01, 0x30, 0x01);
+                    break;
+                case CMD_Version:
+                    version();
+                    break;
+                case CMD_READ_SENSOR:
+                    SensorVal = readSensor(gbl_cur_param);
+                    printf(usb_cdc_putc, "%c%c%c%c", ReplyHeader1, ReplyHeader2,SensorVal >> 8, SensorVal & 0xff);
+                    break;
+                case CMD_MOTOR_CONTROL:
+                    MotorControl (gbl_cur_param);
+                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
+                    break;
+                case CMD_MOTOR_POWER:
+                    SetMotorPower(gbl_cur_param);
+                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
+                    break;
+                case CMD_TALK_TO_MOTOR:
+                    gblActiveMotors = gbl_cur_ext_byte;
+                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
+                    break;
+                case CMD_BURST_MODE:
+                    SetBurstMode(gbl_cur_ext_byte, gbl_cur_ext);
+                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
+                    break;
+                case CMD_MISC_CONTROL:
+                    miscControl(gbl_cur_param, gbl_cur_ext, gbl_cur_ext_byte);
+                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
+                    break;
+                default:
+                    break;
             }
             if ((gbl_cur_cmd == CMD_MISC_CONTROL) && (gbl_cur_param == MISC_UPLOAD_EEPROM)) {
                 uploadLen = ((((int16) gbl_cur_ext << 8) + gbl_cur_ext_byte)<< 5);
