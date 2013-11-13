@@ -29,11 +29,11 @@
 #fuses HSPLL,NOWDT,NOPROTECT,USBDIV,PLL5,NODEBUG,CPUDIV1,VREGEN,NOLVP
 #use delay(clock=48000000)
 #use i2c(master, sda=PIN_B0, scl=PIN_B1, FORCE_HW)
-#use rs232(UART1,baud=9600)
+
 
 #include <usb_cdc.h>
 
-//defini��o de pinos da placa
+//definicao de pinos da placa
 #define RUN_BUTTON   PIN_D1
 #define RUN_LED      PIN_A4
 #define USER_LED     PIN_D0

@@ -530,6 +530,8 @@ void ProcessInput() {
                     case RUN:
                         doNotStopRunningProcedure = 1;
                         start_stop_logo_machine = 1;
+                        gblLogoIsRunning = 0;
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case CRICKET_CHECK:
                         CMD_STATE = CRICKET_NAME;
