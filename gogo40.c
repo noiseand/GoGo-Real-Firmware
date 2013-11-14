@@ -403,29 +403,6 @@ unsigned int16 readSensor(int sensorNo) {
     return read_adc();
 }
 
-int readUsbBuffer(int *charPtr) {
-    int errorCode;
-    if (gblUsbBufferIsFull == TRUE) {
-        gblUsbBufferIsFull = FALSE;
-        errorCode = USB_OVERFLOW;
-        gblUsbBufferPutIndex = 0;
-        gblUsbBufferGetIndex = 0;
-        *charPtr = 0;
-    } else if (gblUsbBufferGetIndex == gblUsbBufferPutIndex) {
-        errorCode = USB_NO_DATA;
-        *charPtr = 0;
-    } else {
-        *charPtr = gblUsbBuffer[gblUsbBufferGetIndex];
-        gblUsbBufferGetIndex++;
-        if (gblUsbBufferGetIndex >= USB_BUFFER_SIZE) {
-            gblUsbBufferGetIndex = 0;
-        }
-        errorCode = USB_SUCCESS;
-    }
-    return (errorCode);
-}
-
-
 
 void intro() {
     set_pwm1_duty(50);
@@ -493,14 +470,15 @@ void flashWrite(int16 InByte) {
 }
 
 void ProcessInput() {
-    int InByte, buff_status;
+    unsigned int8 InByte;
     int1 doNotStopRunningProcedure;
 
-    while ((buff_status = readUsbBuffer(&InByte)) == USB_SUCCESS) {
+    while (usbBufferSize>0) {
+        InByte = readUsbBuffer();
         gblCmdTimeOut = 0;
         gblMostRecentlyReceivedByte = InByte;
         gblNewByteHasArrivedFlag = 1;
-        printf(usb_cdc_putc, "%c", InByte);
+
         switch (CMD_STATE) {
             case WAITING_FOR_FIRST_HEADER:
                 switch (InByte) {
@@ -509,13 +487,28 @@ void ProcessInput() {
                         doNotStopRunningProcedure = 1;
                         break;
                     case SET_PTR:
-                        CMD_STATE = SET_PTR_HI_BYTE;
+                        InByte = readUsbBuffer();
+                        gblMemPtr = (unsigned int16) InByte << 8;
+                        InByte = readUsbBuffer();
+                        gblMemPtr = gblMemPtr | InByte;
+                        if ((gblMemPtr & 0xff0) == 0xff0) {
+                            gblMemPtr = (RUN_BUTTON_BASE_ADDRESS + ((gblMemPtr & 0xf) * 2)) - FLASH_USER_PROGRAM_BASE_ADDRESS;
+                            set_pwm1_duty(50);
+                        } else {
+                            gblMemPtr *= 2;
+                        }
+                        flashSetWordAddress(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case READ_BYTES:
                         CMD_STATE = READ_BYTES_COUNT_HI;
                         break;
                     case WRITE_BYTES:
-                        CMD_STATE = WRITE_BYTES_COUNT_HI;
+                        InByte = readUsbBuffer();
+                        gblRWCount = (unsigned int16) InByte << 8;
+                        InByte = readUsbBuffer();
+                        gblRWCount = gblRWCount | InByte;
+                        CMD_STATE = WRITE_BYTES_SENDING;
                         break;
                     case RUN:
                         doNotStopRunningProcedure = 1;
@@ -570,21 +563,6 @@ void ProcessInput() {
                 break;
             case CMD_READY:
                 break;
-            case SET_PTR_HI_BYTE:
-                gblMemPtr = (unsigned int16) InByte << 8;
-                CMD_STATE = SET_PTR_LOW_BYTE;
-                break;
-            case SET_PTR_LOW_BYTE:
-                gblMemPtr = gblMemPtr | InByte;
-                CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                if ((gblMemPtr & 0xff0) == 0xff0) {
-                    gblMemPtr = (RUN_BUTTON_BASE_ADDRESS + ((gblMemPtr & 0xf) * 2)) - FLASH_USER_PROGRAM_BASE_ADDRESS;
-                    set_pwm1_duty(50);
-                } else {
-                    gblMemPtr *= 2;
-                }
-                flashSetWordAddress(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
-                break;
             case READ_BYTES_COUNT_HI:
                 gblRWCount = (unsigned int16) InByte << 8;
                 CMD_STATE = READ_BYTES_COUNT_LOW;
@@ -594,14 +572,6 @@ void ProcessInput() {
                 sendBytes(gblMemPtr, gblRWCount);
                 gblMemPtr += gblRWCount;
                 CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                break;
-            case WRITE_BYTES_COUNT_HI:
-                gblRWCount = (unsigned int16) InByte << 8;
-                CMD_STATE = WRITE_BYTES_COUNT_LOW;
-                break;
-            case WRITE_BYTES_COUNT_LOW:
-                gblRWCount = gblRWCount | InByte;
-                CMD_STATE = WRITE_BYTES_SENDING;
                 break;
             case WRITE_BYTES_SENDING:
                 set_pwm1_duty(0);
@@ -649,27 +619,38 @@ void ProcessInput() {
             break;
         }
     }
-    if (buff_status == USB_OVERFLOW) {
-        CMD_STATE = WAITING_FOR_FIRST_HEADER;
+}
+
+
+unsigned int8 readUsbBuffer() {
+    if(usbBufferSize>0){
+        unsigned int8 command = usbBuffer[usbBufferStart];
+        usbBufferStart++;
+        usbBufferStart %= USB_BUFFER_SIZE;
+        usbBufferSize--;
+        return command;
     }
 }
 
-void ReadUsb() {
-    while (usb_cdc_kbhit()) {
-        if (gblUsbBufferIsFull == FALSE) {
-            gblUsbBuffer[gblUsbBufferPutIndex] = usb_cdc_getc();
-            gblUsbBufferPutIndex++;
-            if (gblUsbBufferPutIndex >= USB_BUFFER_SIZE)
-                gblUsbBufferPutIndex = 0;
-            if (gblUsbBufferPutIndex == gblUsbBufferGetIndex)
-                gblUsbBufferIsFull = TRUE;
-        }
+void updateUsbBuffer() {
+    unsigned int8 last_byte;
+    while(usb_cdc_kbhit() && (usbBufferSize < USB_BUFFER_SIZE)){
+        last_byte = usb_cdc_getc();
+        usbBuffer[usbBufferEnd] = last_byte;
+        usbBufferEnd ++;
+        usbBufferEnd %= USB_BUFFER_SIZE;
+        usbBufferSize++;
+        printf(usb_cdc_putc,"%c",last_byte);
         delay_ms(5);
     }
 }
 
-
 void init_variables() {
+    usbBufferStart = 0;
+    usbBufferEnd = 0;
+    usbBufferSize = 0;
+    
+    
     gblLogoIsRunning = 0;
     time_button_pressed = 0; // last time that run button was pressed 
     start_stop_logo_machine = FALSE;
@@ -697,9 +678,6 @@ void init_variables() {
     gblWaitCounter = 0;
     gblTimer = 0;
     gblCmdTimeOut = 0;
-    gblUsbBufferPutIndex=0;
-    gblUsbBufferGetIndex=0;
-    gblUsbBufferIsFull=FALSE;
     HILOWHasArrivedFlag = 0;
     adressHILOW = 0;
     gblFlashBuffer[getenv("FLASH_ERASE_SIZE")];
@@ -768,7 +746,7 @@ void main() {
     usb_cdc_init();
     usb_init();
     while (1) {
-        ReadUsb();
+        updateUsbBuffer();
         ProcessInput();
         if (CMD_STATE == CMD_READY) {
             switch (gbl_cur_cmd) {

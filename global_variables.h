@@ -21,6 +21,13 @@
 /////////////////////////////////////////////////////////////////
 //  Global Variables
 /////////////////////////////////////////////////////////////////
+//usb 
+unsigned int8 usbBuffer[USB_BUFFER_SIZE];
+unsigned int8 usbBufferStart; //0
+unsigned int8 usbBufferEnd; //0
+unsigned int8 usbBufferSize;//0
+
+
 
 int1 gblLogoIsRunning = 0;
 unsigned int16 time_button_pressed = 0; // last time that run button was pressed 
@@ -53,10 +60,6 @@ int1 gblNewByteHasArrivedFlag = 0;
   // used for the wait cmd in Logo vm
 unsigned int16 gblTimer = 0;   // This is the timer for the TIMER and RESETT commands
 int gblCmdTimeOut = 0; // counter to make sure the command state is not stuck somewhere
-int gblUsbBuffer[USB_BUFFER_SIZE];
-int gblUsbBufferPutIndex=0;
-int gblUsbBufferGetIndex=0;
-int gblUsbBufferIsFull=FALSE;
 int HILOWHasArrivedFlag = 0;
 int16 adressHILOW = 0;
 char gblFlashBuffer[getenv("FLASH_ERASE_SIZE")]; // buffer for flash write operations

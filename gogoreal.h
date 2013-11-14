@@ -24,9 +24,12 @@
 
 void stkPush(unsigned int16 stackItem);
 unsigned int16 stkPop(void);
+unsigned int8 readUsbBuffer();
+
+void updateUsbBuffer();
+
 void inputPush(unsigned int16 stackItem);
 unsigned int16 inputPop(void);
-void stkErro();
 void sendBytes(unsigned int16 memPtr, unsigned int16 count);
 unsigned int16 fetchNextOpcode();
 void sendBytes(unsigned int16 memPtr, unsigned int16 count);
