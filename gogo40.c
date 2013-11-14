@@ -196,36 +196,36 @@ void timer1ISR() {
 void timer2ISR() {
 }
 
-void MotorControl(int MotorCmd) {
+void MotorControl(unsigned int8 MotorCmd) {
     int i;
     for (i = 0; i < MotorCount; i++) {
         if ((gblActiveMotors >> i) & 1) {
             SetMotorMode (MOTOR_NORMAL);
             switch (MotorCmd) {
-            case MTR_ON:
-                MotorON(i);
-                break;
-            case MTR_OFF:
-                MotorOFF(i);
-                break;
-            case MTR_RD:
-                MotorRD(i);
-                break;
-            case MTR_THISWAY:
-                MotorThisWay(i);
-                break;
-            case MTR_THATWAY:
-                MotorThatWay(i);
-                break;
-            case MTR_COAST:
-                MotorCoast(i);
-                break;
+                case MTR_ON:
+                    MotorON(i);
+                    break;
+                case MTR_OFF:
+                    MotorOFF(i);
+                    break;
+                case MTR_RD:
+                    MotorRD(i);
+                    break;
+                case MTR_THISWAY:
+                    MotorThisWay(i);
+                    break;
+                case MTR_THATWAY:
+                    MotorThatWay(i);
+                    break;
+                case MTR_COAST:
+                    MotorCoast(i);
+                    break;
             }
         }
     }
 }
 
-void SetMotorPower(int Power) {
+void SetMotorPower(unsigned int8 Power) {
     int i;
     for (i = 0; i < MotorCount; i++) {
         if ((gblActiveMotors >> i) & 1) {
@@ -394,14 +394,6 @@ void SetBurstMode(int SensorBits, int Mode) {
     }
 }
 
-unsigned int16 readSensor(int sensorNo) {
-    if (gblCurSensorChannel != sensorNo) {
-        set_adc_channel(sensorNo);
-        gblCurSensorChannel=sensorNo;
-        delay_us(channelSwitchDelay);
-    }
-    return read_adc();
-}
 
 
 void intro() {
@@ -469,6 +461,17 @@ void flashWrite(int16 InByte) {
     flashFlushBuffer();
 }
 
+unsigned int16 readSensor(int sensorNo) {
+    if (gblCurSensorChannel != sensorNo) {
+        set_adc_channel(sensorNo);
+        gblCurSensorChannel=sensorNo;
+        delay_us(channelSwitchDelay);
+    }
+    return read_adc();
+}
+
+
+
 void ProcessInput() {
     unsigned int8 InByte;
     int1 doNotStopRunningProcedure;
@@ -478,12 +481,17 @@ void ProcessInput() {
         gblCmdTimeOut = 0;
         gblMostRecentlyReceivedByte = InByte;
         gblNewByteHasArrivedFlag = 1;
-
         switch (CMD_STATE) {
             case WAITING_FOR_FIRST_HEADER:
                 switch (InByte) {
                     case CMD_PING:
-                        printf(usb_cdc_putc, "%c%c%c", 0x01, 0x30, 0x01);
+                        printf(usb_cdc_putc, "%c%c",BOARD_VERSION, FIRMWARE_VERSION);
+                        break;
+                    case CMD_READ_SENSOR:
+                        InByte = readUsbBuffer();
+                        unsigned int16 sensor_value = readSensor(InByte);
+                        printf(usb_cdc_putc, "%c%c",sensor_value >> 8, sensor_value & 0xff);
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case InHeader1:
                         CMD_STATE = WAITING_FOR_SECOND_HEADER;
@@ -532,6 +540,20 @@ void ProcessInput() {
                         break;
                     case CMD_LED_OFF:
                         output_low(USER_LED);
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
+                        break;
+                    case CMD_TALK_TO_MOTOR:
+                        gblActiveMotors = readUsbBuffer();
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
+                        break;
+                    case CMD_MOTOR_CONTROL:
+                        InByte = readUsbBuffer();
+                        MotorControl(InByte);
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
+                        break;
+                    case CMD_MOTOR_POWER:
+                        InByte = readUsbBuffer();
+                        SetMotorPower(InByte);
                         CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     default:
@@ -741,8 +763,6 @@ void initBoard() {
 
 void main() {
     initBoard();
-        
-    int16 SensorVal;
     int16 uploadLen, counter;
     int16 foo;
 
@@ -753,25 +773,8 @@ void main() {
         ProcessInput();
         if (CMD_STATE == CMD_READY) {
             switch (gbl_cur_cmd) {
-
                 case CMD_Version:
                     version();
-                    break;
-                case CMD_READ_SENSOR:
-                    SensorVal = readSensor(gbl_cur_param);
-                    printf(usb_cdc_putc, "%c%c",SensorVal >> 8, SensorVal & 0xff);
-                    break;
-                case CMD_MOTOR_CONTROL:
-                    MotorControl (gbl_cur_param);
-                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                    break;
-                case CMD_MOTOR_POWER:
-                    SetMotorPower(gbl_cur_param);
-                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                    break;
-                case CMD_TALK_TO_MOTOR:
-                    gblActiveMotors = gbl_cur_ext_byte;
-                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
                     break;
                 case CMD_BURST_MODE:
                     SetBurstMode(gbl_cur_ext_byte, gbl_cur_ext);

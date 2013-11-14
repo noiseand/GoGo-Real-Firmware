@@ -25,17 +25,33 @@
 //*****  contact  Felipe Augusto Silva  *****************************************//
 //*****  email:  fel1310@hotmail.com   *****************************************//
 //******************************************************************************//
+
+#Define BOARD_VERSION 1
+#Define FIRMWARE_VERSION 1
+
 #define T1_COUNTER      28036
+#define CMD_PING        0
 #define CMD_BEEP        196
 #define CMD_LED_ON      192
 #define CMD_LED_OFF     193
+#define CMD_READ_SENSOR 32
+#define CMD_TALK_TO_MOTOR   127
+#define CMD_MOTOR_CONTROL   200
+#define CMD_MOTOR_POWER      201
+
+
+#define MTR_ON       0
+#define MTR_OFF      1
+#define MTR_RD       2
+#define MTR_THISWAY  3
+#define MTR_THATWAY  4
+#define MTR_COAST    5
 
 //old
-#define CMD_PING         0x00
-#define CMD_READ_SENSOR      0x01
-#define CMD_MOTOR_CONTROL   0x02
-#define CMD_MOTOR_POWER      0x03
-#define CMD_TALK_TO_MOTOR   0x04
+
+
+
+
 #define CMD_BURST_MODE      0x05
 #define CMD_MISC_CONTROL   0x06
 #define CMD_Version            0x07
@@ -54,12 +70,7 @@
 #define I2C_WRITE  2
 #define I2C_READ   3
 
-#define MTR_ON       0
-#define MTR_OFF      1
-#define MTR_RD       2
-#define MTR_THISWAY  3
-#define MTR_THATWAY  4
-#define MTR_COAST    5
+
 
 
 #define ACK_BYTE       0b10101010   // 0xAA
@@ -323,11 +334,7 @@
 #define SERVO_LT              88
 #define SERVO_RT              89
 
-#define TALK_TO_MOTOR        90   // this replaces the M_A, M_B, M_C, ... commands.
-// it will allow a more flexible motor addressing
-// i.e. abc, would now work.
-// Only the GoGo Compiler (not Jackal/Logo Blocks)
-// will make use of this.
+#define TALK_TO_MOTOR        90
 
 #define CL_I2C_START          91
 #define CL_I2C_STOP           92
