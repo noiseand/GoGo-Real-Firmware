@@ -26,7 +26,9 @@
 //*****  email:  fel1310@hotmail.com   *****************************************//
 //******************************************************************************//
 #define T1_COUNTER      28036
-
+#define CMD_BEEP        196
+#define CMD_LED_ON      192
+#define CMD_LED_OFF     193
 
 //old
 #define CMD_PING         0x00
@@ -36,13 +38,12 @@
 #define CMD_TALK_TO_MOTOR   0x04
 #define CMD_BURST_MODE      0x05
 #define CMD_MISC_CONTROL   0x06
-#define CMD_Version			0x07
+#define CMD_Version            0x07
 
-#define TURN_USER_LED_ON      0
-#define TURN_USER_LED_OFF     1
+
 
 #define MISC_USER_LED    0
-#define MISC_BEEP        1
+
 #define MISC_SET_PWM     2
 #define MISC_UPLOAD_EEPROM    3
 #define MISC_I2C_SETUP  4
@@ -189,8 +190,8 @@
 
 
 
-#define STACK_SIZE      		32
-#define INPUT_STACK_SIZE		32
+#define STACK_SIZE              32
+#define INPUT_STACK_SIZE        32
 
 
 /// Logo VM state machine definition

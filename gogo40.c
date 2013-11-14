@@ -352,16 +352,6 @@ void MotorCoast(int MotorNo) {
 
 void miscControl(int cur_param, int cur_ext, int cur_ext_byte) {
     switch (cur_param) {
-        case MISC_USER_LED:
-            if (cur_ext == TURN_USER_LED_ON) {
-                output_high(USER_LED);
-            } else {
-                output_low(USER_LED);
-            }
-            break;
-        case MISC_BEEP:
-            beep();
-            break;
         case MISC_SET_PWM:
             MotorControl(MTR_THISWAY);
             SetMotorMode(MOTOR_SERVO);
@@ -536,7 +526,20 @@ void ProcessInput() {
                     case CRICKET_CHECK:
                         CMD_STATE = CRICKET_NAME;
                         break;
-
+                    case CMD_BEEP:
+                        beep();
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
+                        break;
+                    case CMD_LED_ON:
+                        output_high(USER_LED);
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
+                        break;
+                    case CMD_LED_OFF:
+                        output_low(USER_LED);
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
+                        break;
+                    default:
+                        break;
                 };
                 if (!doNotStopRunningProcedure) {
                     gblLogoIsRunning = 0;
@@ -633,7 +636,6 @@ void ProcessInput() {
                         }
                     }
                 }
-                printf(usb_cdc_putc, "%c", 255 - InByte);
                 break;
             case CRICKET_NAME:
                 printf(usb_cdc_putc, "%c", 0x37);
@@ -779,7 +781,7 @@ void main() {
                     break;
                 case CMD_READ_SENSOR:
                     SensorVal = readSensor(gbl_cur_param);
-                    printf(usb_cdc_putc, "%c%c%c%c", ReplyHeader1, ReplyHeader2,SensorVal >> 8, SensorVal & 0xff);
+                    printf(usb_cdc_putc, "%c%c",SensorVal >> 8, SensorVal & 0xff);
                     break;
                 case CMD_MOTOR_CONTROL:
                     MotorControl (gbl_cur_param);
