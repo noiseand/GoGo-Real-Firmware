@@ -482,6 +482,9 @@ void ProcessInput() {
         switch (CMD_STATE) {
             case WAITING_FOR_FIRST_HEADER:
                 switch (InByte) {
+                    case CMD_PING:
+                        printf(usb_cdc_putc, "%c%c%c", 0x01, 0x30, 0x01);
+                        break;
                     case InHeader1:
                         CMD_STATE = WAITING_FOR_SECOND_HEADER;
                         doNotStopRunningProcedure = 1;
@@ -750,10 +753,7 @@ void main() {
         ProcessInput();
         if (CMD_STATE == CMD_READY) {
             switch (gbl_cur_cmd) {
-                case CMD_PING:
-                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                    printf(usb_cdc_putc, "%c%c%c", 0x01, 0x30, 0x01);
-                    break;
+
                 case CMD_Version:
                     version();
                     break;
