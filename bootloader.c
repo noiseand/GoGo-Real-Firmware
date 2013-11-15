@@ -127,9 +127,10 @@ void main() {
                 }
             }while (startChar != ':');
             recLen = (a2i(usb_cdc_getc()) << 4) + a2i(usb_cdc_getc());// numero de bytes de dados
-            writeAddr  = (a2i(usb_cdc_getc())<<= 4);
-            writeAddr += (a2i(usb_cdc_getc())<<= 4);
-            writeAddr += (a2i(usb_cdc_getc())<<= 4);
+            writeAddr = (a2i(usb_cdc_getc()) << 4) + a2i(usb_cdc_getc());
+            writeAddr <<= 4;
+            writeAddr += a2i(usb_cdc_getc());
+            writeAddr <<= 4;
             writeAddr += a2i(usb_cdc_getc());
             usb_cdc_getc(); // recebe o zero antes do recType
             recType = usb_cdc_getc();// tipo de escrita , esta prevista 0, 1 e 4
