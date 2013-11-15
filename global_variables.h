@@ -61,7 +61,6 @@ int1 gblNewByteHasArrivedFlag = 0;
 unsigned int16 gblTimer = 0;   // This is the timer for the TIMER and RESETT commands
 int gblCmdTimeOut = 0; // counter to make sure the command state is not stuck somewhere
 int HILOWHasArrivedFlag = 0;
-int16 adressHILOW = 0;
 char gblFlashBuffer[getenv("FLASH_ERASE_SIZE")]; // buffer for flash write operations
 char gblFlashBufferPtr=0; // pointer with-in the flash buffer
 int16 gblFlashBaseAddress; // where the flash buffer shuld be written to in the flash mem

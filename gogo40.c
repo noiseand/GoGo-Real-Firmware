@@ -71,15 +71,10 @@ unsigned int16 inputPop(void) {
     return 0;
 }
 
-void version() {
-    printf(usb_cdc_putc, "4");
-}
-
 void sendBytes(unsigned int16 memPtr, unsigned int16 count) {
     while (count-- > 0){
         printf(usb_cdc_putc,"%c",read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + memPtr++));
     }
-
 }
 
 unsigned int16 fetchNextOpcode() {
@@ -98,6 +93,7 @@ unsigned int16 fetchNextOpcode() {
 
     return opcode;
 }
+
 
 
 #int_rtcc
@@ -350,50 +346,11 @@ void MotorCoast(int MotorNo) {
   gblMotorONOFF &= ~(1<<MotorNo);
 }
 
-void miscControl(int cur_param, int cur_ext, int cur_ext_byte) {
-    switch (cur_param) {
-        case MISC_SET_PWM:
-            MotorControl(MTR_THISWAY);
-            SetMotorMode(MOTOR_SERVO);
-            SetMotorPower(cur_ext_byte);
-            MotorControl(MTR_ON);
-            break;
-        case MISC_UPLOAD_EEPROM:
-            break;
-        case MISC_I2C_SETUP:
-            switch (cur_ext) {
-                case I2C_START:
-                    i2c_start();
-                    break;
-                case I2C_STOP:
-                    i2c_stop();
-                    break;
-                case I2C_WRITE:
-                    i2c_write(cur_ext_byte);
-                    break;
-                case I2C_READ:
-                    i2c_read(0);
-                    break;
-            }
-            break;
-    }
-}
-
 void beep() {
     set_pwm1_duty(50);
     delay_ms(50);
     set_pwm1_duty(0);
 }
-
-void SetBurstMode(int SensorBits, int Mode) {
-    gblBurstModeBits = SensorBits;
-    if (Mode > 0){
-        gblSlowBurstMode = 1;
-    } else{
-        gblSlowBurstMode = 0;
-    }
-}
-
 
 
 void intro() {
@@ -481,9 +438,7 @@ void ProcessInput() {
         gblCmdTimeOut = 0;
         gblMostRecentlyReceivedByte = InByte;
         gblNewByteHasArrivedFlag = 1;
-        switch (CMD_STATE) {
-            case WAITING_FOR_FIRST_HEADER:
-                switch (InByte) {
+        switch (InByte) {
                     case CMD_PING:
                         printf(usb_cdc_putc, "%c%c",BOARD_VERSION, FIRMWARE_VERSION);
                         break;
@@ -493,10 +448,6 @@ void ProcessInput() {
                         printf(usb_cdc_putc, "%c%c",sensor_value >> 8, sensor_value & 0xff);
                         CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
-                    case InHeader1:
-                        CMD_STATE = WAITING_FOR_SECOND_HEADER;
-                        doNotStopRunningProcedure = 1;
-                        break;
                     case SET_PTR:
                         InByte = readUsbBuffer();
                         gblMemPtr = (unsigned int16) InByte << 8;
@@ -504,7 +455,6 @@ void ProcessInput() {
                         gblMemPtr = gblMemPtr | InByte;
                         if ((gblMemPtr & 0xff0) == 0xff0) {
                             gblMemPtr = (RUN_BUTTON_BASE_ADDRESS + ((gblMemPtr & 0xf) * 2)) - FLASH_USER_PROGRAM_BASE_ADDRESS;
-                            set_pwm1_duty(50);
                         } else {
                             gblMemPtr *= 2;
                         }
@@ -512,14 +462,21 @@ void ProcessInput() {
                         CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case READ_BYTES:
-                        CMD_STATE = READ_BYTES_COUNT_HI;
+                        InByte = readUsbBuffer();
+                        gblRWCount = (unsigned int16) InByte << 8;
+                        InByte = readUsbBuffer();
+                        gblRWCount = gblRWCount | InByte;
+                        sendBytes(gblMemPtr, gblRWCount);
+                        gblMemPtr += gblRWCount;
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case WRITE_BYTES:
                         InByte = readUsbBuffer();
                         gblRWCount = (unsigned int16) InByte << 8;
                         InByte = readUsbBuffer();
                         gblRWCount = gblRWCount | InByte;
-                        CMD_STATE = WRITE_BYTES_SENDING;
+                        write_logo_code();
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case RUN:
                         doNotStopRunningProcedure = 1;
@@ -556,98 +513,45 @@ void ProcessInput() {
                         SetMotorPower(InByte);
                         CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
+                    case MISC_SET_PWM:
+                        InByte = readUsbBuffer();
+                        MotorControl(MTR_THISWAY);
+                        SetMotorMode(MOTOR_SERVO);
+                        SetMotorPower(InByte);
+                        MotorControl(MTR_ON);
+                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
+                        break;
                     default:
                         break;
-                };
-                if (!doNotStopRunningProcedure) {
-                    gblLogoIsRunning = 0;
-                    gblWaitCounter = 0;
-                    output_low(RUN_LED);
-                    gblBurstModeBits = 0;
-                }
-                doNotStopRunningProcedure = 0;
-                break;
-            case WAITING_FOR_SECOND_HEADER:
-                if (InByte == InHeader2){
-                    CMD_STATE = WAITING_FOR_CMD_BYTE;
-                }
-                break;
-            case WAITING_FOR_CMD_BYTE:
-                gbl_cur_cmd = (InByte & 0b11100000) >> 5;
-                gbl_cur_param = (InByte & 0b00011100) >> 2;
-                gbl_cur_ext = (InByte & 0b00000011);
-                if (gbl_cur_cmd > ONE_BYTE_CMD) {
-                    CMD_STATE = WAITING_FOR_SECOND_CMD_BYTE;
-                } else {
-                    CMD_STATE = CMD_READY;
-                }
-                break;
-            case WAITING_FOR_SECOND_CMD_BYTE:
-                gbl_cur_ext_byte = InByte;
-                CMD_STATE = CMD_READY;
-                break;
-            case CMD_READY:
-                break;
-            case READ_BYTES_COUNT_HI:
-                gblRWCount = (unsigned int16) InByte << 8;
-                CMD_STATE = READ_BYTES_COUNT_LOW;
-                break;
-            case READ_BYTES_COUNT_LOW:
-                gblRWCount = gblRWCount | InByte;
-                sendBytes(gblMemPtr, gblRWCount);
-                gblMemPtr += gblRWCount;
-                CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                break;
-            case WRITE_BYTES_SENDING:
-                set_pwm1_duty(0);
-                if (HILOWHasArrivedFlag == 2) {
-                    adressHILOW += InByte;
-                    HILOWHasArrivedFlag = 0;
-                    flashBufferedWrite (adressHILOW);
-                    if (--gblRWCount < 1) {
-                        flashFlushBuffer();
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                    }
-                 } else {
-                     if (HILOWHasArrivedFlag == 1) {
-                         adressHILOW = (int16) InByte;
-                         adressHILOW <<= 8;
-                         HILOWHasArrivedFlag = 2;
-                     } else {
-                        if (InByte == 128) {
-                            HILOWHasArrivedFlag = 1;
-                            adressHILOW = 0;
-                            flashBufferedWrite(InByte);
-                            if (--gblRWCount < 1) {
-                                flashFlushBuffer();
-                                CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                            }    
-                        } else {
-                            flashBufferedWrite(InByte);
-                            if (--gblRWCount < 1) {
-                                flashFlushBuffer();
-                                CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                            }
-                        }
-                    }
-                }
-                break;
-            case CRICKET_NAME:
-                printf(usb_cdc_putc, "%c", 0x37);
-                CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                break;
-            default:
-                CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                break;
-        }
-        if (CMD_STATE == CMD_READY){
-            break;
-        }
+        };
     }
 }
 
+void write_logo_code(){
+    unsigned int8 InByte;
+    unsigned int16 adressHILOW = 0;
+    while(gblRWCount>0){
+        InByte = readUsbBuffer();
+        if(InByte==128){
+            flashBufferedWrite(InByte);
+            adressHILOW = (unsigned int16) readUsbBuffer() << 8;
+            adressHILOW += readUsbBuffer();
+            flashBufferedWrite(adressHILOW);
+            gblRWCount--;
+        }
+        else{
+            flashBufferedWrite(InByte);
+        }
+        gblRWCount--;
+    }
+    flashFlushBuffer();
+
+}
 
 unsigned int8 readUsbBuffer() {
+    if(usbBufferSize < 1){
+        updateUsbBuffer();
+    }
     if(usbBufferSize>0){
         unsigned int8 command = usbBuffer[usbBufferStart];
         usbBufferStart++;
@@ -704,7 +608,6 @@ void init_variables() {
     gblTimer = 0;
     gblCmdTimeOut = 0;
     HILOWHasArrivedFlag = 0;
-    adressHILOW = 0;
     gblFlashBuffer[getenv("FLASH_ERASE_SIZE")];
     gblFlashBufferPtr=0;
     gblFlashBaseAddress = 0;
@@ -771,46 +674,6 @@ void main() {
     while (1) {
         updateUsbBuffer();
         ProcessInput();
-        if (CMD_STATE == CMD_READY) {
-            switch (gbl_cur_cmd) {
-                case CMD_Version:
-                    version();
-                    break;
-                case CMD_BURST_MODE:
-                    SetBurstMode(gbl_cur_ext_byte, gbl_cur_ext);
-                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                    break;
-                case CMD_MISC_CONTROL:
-                    miscControl(gbl_cur_param, gbl_cur_ext, gbl_cur_ext_byte);
-                    printf(usb_cdc_putc, "%c%c%c", ReplyHeader1, ReplyHeader2,ACK_BYTE);
-                    break;
-                default:
-                    break;
-            }
-            if ((gbl_cur_cmd == CMD_MISC_CONTROL) && (gbl_cur_param == MISC_UPLOAD_EEPROM)) {
-                uploadLen = ((((int16) gbl_cur_ext << 8) + gbl_cur_ext_byte)<< 5);
-                if (uploadLen == 0){
-                    uploadLen = read_program_eeprom(MEM_PTR_LOG_BASE_ADDRESS);
-                }
-                uploadLen <<= 1;
-                printf(usb_cdc_putc, "%c%c%c%c", EEPROMuploadHeader1,EEPROMuploadHeader2, uploadLen & 0xff, uploadLen >> 8);
-                uploadLen >>= 1;
-                for (counter = 0; counter < uploadLen; counter++) {
-                    foo = read_program_eeprom((RECORD_BASE_ADDRESS + counter));
-                    printf(usb_cdc_putc, "%c%c", foo & 0xff, foo >> 8);
-                }
-            }
-            CMD_STATE = WAITING_FOR_FIRST_HEADER;
-        } else {
-            if (!gblSlowBurstMode || gblSlowBurstModeTimerHasTicked) {
-                if ((gblBurstModeBits >> gblBurstModeCounter) & 1) {
-                    long SensorVal = readSensor(gblBurstModeCounter);
-                    printf(usb_cdc_putc, "%c%c%c", 0x0c,(gblBurstModeCounter << 5) | (SensorVal >> 8),SensorVal & 0xff);
-                }
-                gblBurstModeCounter = (gblBurstModeCounter + 1) % 8;
-                gblSlowBurstModeTimerHasTicked = 0;
-            }
-        }
         if(start_stop_logo_machine){
             if (gblLogoIsRunning){
                 gblLogoIsRunning = 0;

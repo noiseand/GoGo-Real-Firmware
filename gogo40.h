@@ -38,6 +38,7 @@
 #define CMD_TALK_TO_MOTOR   127
 #define CMD_MOTOR_CONTROL   200
 #define CMD_MOTOR_POWER      201
+#define MISC_SET_PWM     202
 
 
 #define MTR_ON       0
@@ -49,18 +50,7 @@
 
 //old
 
-
-
-
-#define CMD_BURST_MODE      0x05
 #define CMD_MISC_CONTROL   0x06
-#define CMD_Version            0x07
-
-
-
-#define MISC_USER_LED    0
-
-#define MISC_SET_PWM     2
 #define MISC_UPLOAD_EEPROM    3
 #define MISC_I2C_SETUP  4
 #define MISC_I2C_RW     5
@@ -69,7 +59,6 @@
 #define I2C_STOP   1
 #define I2C_WRITE  2
 #define I2C_READ   3
-
 
 
 

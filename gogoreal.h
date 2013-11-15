@@ -25,23 +25,14 @@
 void stkPush(unsigned int16 stackItem);
 unsigned int16 stkPop(void);
 unsigned int8 readUsbBuffer();
-
+void write_logo_code();
 void updateUsbBuffer();
 
 void inputPush(unsigned int16 stackItem);
 unsigned int16 inputPop(void);
-void sendBytes(unsigned int16 memPtr, unsigned int16 count);
-unsigned int16 fetchNextOpcode();
-void sendBytes(unsigned int16 memPtr, unsigned int16 count);
 unsigned int16 fetchNextOpcode();
 void evalOpcode(unsigned char opcode);
-void setHigh(int16 Pin);
-void setLow(int16 Pin);
-int  readPin(int16 Pin);
 void flashSetWordAddress(int16 address);
-short getBit(int InByte, int BitNo);
-void setBit(int *InByte, int BitNo);
-void clearBit(int *InByte, int BitNo);
 void flashWrite(int16 InByte);
 void Ping(int Param);
 void TalkToMotor(int MotorBits);
@@ -63,13 +54,9 @@ void MotorCoast(int MotorNo);
 void miscControl(int cur_param, int cur_ext, int cur_ext_byte);
 
 void beep();
-
-void SetBurstMode(int SensorBits, int Mode);
-void DoSensorStuff();
 unsigned int16 readSensor(int sensorNo);
 
 void ProcessInput();
-void ProcessRFInput();
 void init_variables();
 void intro();
 void Halt();
