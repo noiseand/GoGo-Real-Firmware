@@ -107,7 +107,7 @@ void clock_isr() {
         ttTimer0 =0;
         do {
             if (gblTimer0Counter < MotorCount) {
-                if (((gblMotorONOFF >> gblCurrentDutyIndex) & 1) == ON) {
+                if (((gblMotorONOFF >> gblCurrentDutyIndex) & 1) == 1) {
                     if (gblMtrDuty[gblCurrentDutyIndex] < 255) {
                         if (((gblMotorMode >> gblCurrentDutyIndex) & 1) == MOTOR_NORMAL) {
                             if (((gblMotorDir >> gblCurrentDutyIndex) & 1)){
@@ -123,7 +123,7 @@ void clock_isr() {
                 }
             } else {
                 for (i=0 ; i<MotorCount ; i++) {
-                    if (((gblMotorONOFF >> i) & 1) == ON) {
+                    if (((gblMotorONOFF >> i) & 1) == 1) {
                         if (gblMtrDuty[i] > 0) {
                             if (((gblMotorMode >> i) & 1) == MOTOR_NORMAL) {
                                 if (((gblMotorDir >> i) & 1)){
@@ -439,6 +439,8 @@ void ProcessInput() {
                 printf(usb_cdc_putc, "%c%c",sensor_value >> 8, sensor_value & 0xff);
                 break;
             case SET_PTR:
+                start_stop_logo_machine = 1;
+                gblLogoIsRunning = 1;
                 InByte = readUsbBuffer();
                 gblMemPtr = (unsigned int16) InByte << 8;
                 InByte = readUsbBuffer();
@@ -495,6 +497,21 @@ void ProcessInput() {
                 SetMotorMode(MOTOR_SERVO);
                 SetMotorPower(InByte);
                 MotorControl(MTR_ON);
+                break;
+            case CMD_MODE:
+                printf(usb_cdc_putc, "%c",70);//F
+                break;
+            case CMD_BOOTLOADER:
+                disable_interrupts(GLOBAL);
+                write_eeprom(EEPROM_FLAG_ADDR,EEPROM_FLAG_CODE);
+                #asm
+                reset 
+                #endasm 
+            case CMD_LOGO_TURN_ON:
+                write_eeprom(LOGO_TURN_ON_ADDR,LOGO_TURN_ON_FLAG);
+                break;
+            case CMD_NOT_LOGO_TURN_ON:
+                write_eeprom(LOGO_TURN_ON_ADDR,0);
                 break;
             default:
                 break;
@@ -594,7 +611,7 @@ void init_variables() {
 }
 
 void initBoard() {
-    init_variables();
+
     int i;
     set_tris_a (PIC_TRIS_A);
     set_tris_b (PIC_TRIS_B);
@@ -624,17 +641,28 @@ void initBoard() {
     enable_interrupts (INT_TIMER2);
     set_rtcc(0);
     set_timer1(T1_COUNTER);
+    
+
     enable_interrupts(GLOBAL);
-    intro();
 }
 
 void main() {
+    init_variables();
     initBoard();
+    intro();
     int16 uploadLen, counter;
     int16 foo;
 
     usb_cdc_init();
     usb_init();
+    
+    int eeprom = read_eeprom(LOGO_TURN_ON_ADDR);
+    if(eeprom == LOGO_TURN_ON_FLAG){
+        start_stop_logo_machine = 1;
+        gblLogoIsRunning = 0;
+    }
+    
+    
     while (1) {
         updateUsbBuffer();
         ProcessInput();

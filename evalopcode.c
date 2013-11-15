@@ -298,39 +298,39 @@ void evalOpcode(unsigned char opcode) {
         opr2=stkPop();  // second operand
         opr1=stkPop();// first operand
         switch (opcode) {
-    case OP_PLUS:
-            opr1+=opr2;
-            break;
-    case OP_MINUS:
-            opr1-=opr2;
-            break;
-    case OP_MULTIPLY:
-            opr1*=opr2;
-            break;
-    case OP_DIVISION:
-            opr1/=opr2;
-            break;
-    case OP_REMAINDER:
-            opr1%=opr2;
-            break;
-    case OP_EQUAL:
-            opr1=(opr1==opr2);
-            break;
-    case OP_GREATER:
-            opr1=(opr1>opr2);
-            break;
-    case OP_LESS:
-            opr1=(opr1<opr2);
-            break;
-    case OP_AND:
-            opr1=(opr1&&opr2);
-            break;
-    case OP_OR:
-            opr1=(opr1||opr2);
-            break;
-    case OP_XOR:
-            opr1=(opr1^opr2);
-            break;
+            case OP_PLUS:
+                opr1+=opr2;
+                break;
+            case OP_MINUS:
+                opr1-=opr2;
+                break;
+            case OP_MULTIPLY:
+                opr1*=opr2;
+                break;
+            case OP_DIVISION:
+                opr1/=opr2;
+                break;
+            case OP_REMAINDER:
+                opr1%=opr2;
+                break;
+            case OP_EQUAL:
+                opr1=(opr1==opr2);
+                break;
+            case OP_GREATER:
+                opr1=(opr1>opr2);
+                break;
+            case OP_LESS:
+                opr1=(opr1<opr2);
+                break;
+            case OP_AND:
+                opr1=(opr1&&opr2);
+                break;
+            case OP_OR:
+                opr1=(opr1||opr2);
+                break;
+            case OP_XOR:
+                opr1=(opr1^opr2);
+                break;
         };
         stkPush(opr1);
         break;

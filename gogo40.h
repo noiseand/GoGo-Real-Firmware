@@ -31,6 +31,10 @@
 
 #define T1_COUNTER      28036
 #define CMD_PING        0
+#define CMD_BOOTLOADER  4
+#define CMD_MODE        5
+#define CMD_LOGO_TURN_ON        6
+#define CMD_NOT_LOGO_TURN_ON 7
 #define CMD_BEEP        196
 #define CMD_LED_ON      192
 #define CMD_LED_OFF     193
@@ -48,10 +52,15 @@
 #define MTR_THATWAY  4
 #define MTR_COAST    5
 
+#define LOGO_TURN_ON_ADDR 0x02
+#define LOGO_TURN_ON_FLAG 0xDB
+
+
 //old
 
-#define CMD_MISC_CONTROL   0x06
-#define MISC_UPLOAD_EEPROM    3
+#define defaultPort      0
+#define channelSwitchDelay   50 
+
 #define MISC_I2C_SETUP  4
 #define MISC_I2C_RW     5
 
@@ -61,36 +70,8 @@
 #define I2C_READ   3
 
 
-
-#define ACK_BYTE       0b10101010   // 0xAA
-#define InHeader1       0x54
-#define InHeader2       0xfe
-#define ReplyHeader1    0x55
-#define ReplyHeader2    0xff
-
 #define EEPROMuploadHeader1   0xEE
 #define EEPROMuploadHeader2   0x11
-
-#define ON            1
-#define OFF            0
-
-// this is used in main(). Determinds how long to wait for the
-// second command byte.
-#define RETRY         100
-
-
-//  Sensor read modes
-#define NORMAL_READ  0
-#define MAX_READ     1
-#define MIN_READ     2
-#define MEAN_READ    3
-
-
-// this const defines the last command that is
-// one byte long. Please refer to the CMD bits
-// in the GoGo kit serial protocol
-
-#define ONE_BYTE_CMD   3
 
 
 /// How many motors does the board have.
@@ -129,20 +110,12 @@
 #define MOTOR_CD_EN     PIN_D6   // controls the power to the motor chip
 
 
-#define WAITING_FOR_FIRST_HEADER   1
-#define WAITING_FOR_SECOND_HEADER   2
-#define WAITING_FOR_CMD_BYTE      3
-#define WAITING_FOR_SECOND_CMD_BYTE   4
-#define CMD_READY               5
-
 //=========================================================
 // I2C Stuff
 #define I2C_SCL            PIN_B1
 #define I2C_SDA            PIN_B0
 //=========================================================
 #define PIEZO              PIN_C2
-#define LOCAL              0
-#define REMOTE             1
 // ========================================================
 // Serial Buffer Constants
 
@@ -187,9 +160,6 @@
 //   Data recording memory map
 #define RECORD_BASE_ADDRESS      0x59C0
 
-
-
-
 #define STACK_SIZE              32
 #define INPUT_STACK_SIZE        32
 
@@ -218,10 +188,6 @@
 #define WRITE_BYTES     0x85
 #define RUN             0x86
 #define CRICKET_CHECK   0x87
-
-
-
-
 
 
 //////////////////////////////////////
@@ -332,13 +298,3 @@
 
 
 
-#define defaultPort      0
-#define channelSwitchDelay   50   // delay time in us after switching adc channels
-// Don't decrease this value without testing.
-// If the delay is too short (i.e. 10us) the adc won't
-// have enough time to stabilize before reading the
-// next channel.
-
-
-#define  CMD_TIMEOUT_PERIOD  2     // determins how long befor the board will reset
-// the command state. Units in 1/10 of a second
