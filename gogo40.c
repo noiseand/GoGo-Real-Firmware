@@ -160,9 +160,6 @@ void clock_isr() {
          gblTimer0Counter = 0;
       }
     } while ((periodTilNextInterrupt == 0) && (gblTimer0Counter > 0));
-    if (gblTimer0Counter == 0) {
-      gblSlowBurstModeTimerHasTicked=1;
-    }
   }
   set_rtcc(255-periodTilNextInterrupt);
 }
@@ -173,10 +170,6 @@ void clock_isr() {
 void timer1ISR() {
     set_timer1 (T1_COUNTER);
     gblTimer++;
-
-    if (CMD_STATE != WAITING_FOR_FIRST_HEADER) {
-        gblCmdTimeOut++;
-    }
     if (gblWaitCounter > 0) {
         gblWaitCounter--;
     }
@@ -431,11 +424,8 @@ unsigned int16 readSensor(int sensorNo) {
 
 void ProcessInput() {
     unsigned int8 InByte;
-    int1 doNotStopRunningProcedure;
-
     while (usbBufferSize>0) {
         InByte = readUsbBuffer();
-        gblCmdTimeOut = 0;
         gblMostRecentlyReceivedByte = InByte;
         gblNewByteHasArrivedFlag = 1;
         switch (InByte) {
@@ -446,7 +436,6 @@ void ProcessInput() {
                         InByte = readUsbBuffer();
                         unsigned int16 sensor_value = readSensor(InByte);
                         printf(usb_cdc_putc, "%c%c",sensor_value >> 8, sensor_value & 0xff);
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case SET_PTR:
                         InByte = readUsbBuffer();
@@ -459,7 +448,6 @@ void ProcessInput() {
                             gblMemPtr *= 2;
                         }
                         flashSetWordAddress(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case READ_BYTES:
                         InByte = readUsbBuffer();
@@ -468,7 +456,6 @@ void ProcessInput() {
                         gblRWCount = gblRWCount | InByte;
                         sendBytes(gblMemPtr, gblRWCount);
                         gblMemPtr += gblRWCount;
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case WRITE_BYTES:
                         InByte = readUsbBuffer();
@@ -476,42 +463,30 @@ void ProcessInput() {
                         InByte = readUsbBuffer();
                         gblRWCount = gblRWCount | InByte;
                         write_logo_code();
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case RUN:
-                        doNotStopRunningProcedure = 1;
                         start_stop_logo_machine = 1;
                         gblLogoIsRunning = 0;
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
-                        break;
-                    case CRICKET_CHECK:
-                        CMD_STATE = CRICKET_NAME;
                         break;
                     case CMD_BEEP:
                         beep();
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case CMD_LED_ON:
                         output_high(USER_LED);
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case CMD_LED_OFF:
                         output_low(USER_LED);
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case CMD_TALK_TO_MOTOR:
                         gblActiveMotors = readUsbBuffer();
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case CMD_MOTOR_CONTROL:
                         InByte = readUsbBuffer();
                         MotorControl(InByte);
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case CMD_MOTOR_POWER:
                         InByte = readUsbBuffer();
                         SetMotorPower(InByte);
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     case MISC_SET_PWM:
                         InByte = readUsbBuffer();
@@ -519,7 +494,6 @@ void ProcessInput() {
                         SetMotorMode(MOTOR_SERVO);
                         SetMotorPower(InByte);
                         MotorControl(MTR_ON);
-                        CMD_STATE = WAITING_FOR_FIRST_HEADER;
                         break;
                     default:
                         break;
@@ -545,7 +519,6 @@ void write_logo_code(){
         gblRWCount--;
     }
     flashFlushBuffer();
-
 }
 
 unsigned int8 readUsbBuffer() {
@@ -584,15 +557,6 @@ void init_variables() {
     time_button_pressed = 0; // last time that run button was pressed 
     start_stop_logo_machine = FALSE;
     gblWaitCounter =0; // wait to execute logo code
-    CMD_STATE = WAITING_FOR_FIRST_HEADER;
-    gbl_cur_cmd= 0;
-    gbl_cur_param= 0;
-    gbl_cur_ext= 0;
-    gbl_cur_ext_byte= 0;
-    gblBurstModeBits = 0;
-    gblBurstModeCounter=0;
-    gblSlowBurstMode=0;
-    gblSlowBurstModeTimerHasTicked=0;
     gblCurSensorChannel = 0;
     gblMotorMode=0b00000000;
     gblActiveMotors= 0;
@@ -606,7 +570,6 @@ void init_variables() {
     gblLogoIsRunning = 0;
     gblWaitCounter = 0;
     gblTimer = 0;
-    gblCmdTimeOut = 0;
     HILOWHasArrivedFlag = 0;
     gblFlashBuffer[getenv("FLASH_ERASE_SIZE")];
     gblFlashBufferPtr=0;
@@ -698,11 +661,6 @@ void main() {
                 evalOpcode(fetchNextOpcode());
             }
         }
-        if (gblCmdTimeOut > CMD_TIMEOUT_PERIOD) {
-            CMD_STATE = WAITING_FOR_FIRST_HEADER;
-            gblCmdTimeOut = 0;
-        }
-
     }
 }
 

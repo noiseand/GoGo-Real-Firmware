@@ -39,12 +39,8 @@ int16  MotorENPins [MotorCount]={  MTR1_EN, MTR2_EN, MTR3_EN, MTR4_EN};
 int16  MotorCWPins [MotorCount]={  MTR1_CW, MTR2_CW, MTR3_CW, MTR4_CW};
 int16  MotorCCPins [MotorCount]={  MTR1_CC, MTR2_CC, MTR3_CC, MTR4_CC};
 
-unsigned int CMD_STATE;
-int gbl_cur_cmd, gbl_cur_param, gbl_cur_ext, gbl_cur_ext_byte;
-int gblBurstModeBits;
-int gblBurstModeCounter=0;   // tracks which sensor is the current burst mode sensor
-int1 gblSlowBurstMode=0;  // determinds which burst mode we're in (0=normal, 1=slow)
-int1 gblSlowBurstModeTimerHasTicked=0;  // ticks every 1/72 sec (by timer0)
+
+
 int gblCurSensorChannel;
 int gblMotorMode=0b00000000;   // default to normal mode
 int gblActiveMotors;
