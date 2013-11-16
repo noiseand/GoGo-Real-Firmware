@@ -585,7 +585,6 @@ void init_variables() {
     gblLogoIsRunning = 0;
     gblWaitCounter = 0;
     gblTimer = 0;
-    HILOWHasArrivedFlag = 0;
     gblFlashBuffer[getenv("FLASH_ERASE_SIZE")];
     gblFlashBufferPtr=0;
     gblFlashBaseAddress = 0;
