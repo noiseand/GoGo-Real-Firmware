@@ -356,15 +356,6 @@ void intro() {
     output_low(RUN_LED);
 }
 
-void Halt() {
-    while (1) {
-        output_high(RUN_LED);
-        delay_ms(50);
-        output_low(RUN_LED);
-        delay_ms(500);
-    }
-}
-
 
 
 void flashSetWordAddress(int16 address) {

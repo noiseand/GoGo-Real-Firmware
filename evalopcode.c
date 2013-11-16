@@ -49,51 +49,23 @@ void evalOpcode(unsigned char opcode) {
     int16 opr1, opr2, opr3;
     unsigned int16 genPurpose = 0;
 
-    //////////////////////////////////////////////////////////////////////////////
-    /// if opcode is a prcedure call (msb is 1)
-    //printf(usb_cdc_putc," executar %Lu \n", gblMemPtr);
     if (opcode & 0b10000000) {
-        genPurpose = gblMemPtr + 2;  // this is the return address
-        // update the mem pointer to point at the procedure Note That due to PIC 18f4550 the offset is 2 Times fetchNextOpcode()
+        genPurpose = gblMemPtr + 2;
         gblMemPtr = ((((unsigned int16)opcode & 0b00111111) << 8) + 2*fetchNextOpcode());
-        ////printf(usb_cdc_putc," gblMemPtr %Lu #\n",gblMemPtr);
-        // then fetch the new opcode
-        // The first opcode in a procedure is the number of parameters.
         opr1 = fetchNextOpcode();
-
-        /// if the second msb is set -> tail recursion
         if (opcode & 0b01000000) {
-            // - Because this is tail recursion, we have to overwrite preveous procedure inputs
-            //   with the new ones. This loop removes the old inputs.
-            // - In addition to the procedure input we have three extra entries: the data stack pointer ,
-            //   the procedure return address, and the procedure input base address in the input stack.
             for (i = 0; i < (opr1 + 3); i++) {
                 inputPop();
             }
         }
-
-        // Pop the procedure inputs from the main data stack and move them
-        // to the input stack
         for (i = 0; i < opr1; i++) {
             inputPush (stkPop());
         }
-
-        inputPush (gblStkPtr); // save the data stack pointer (we use this with STOP opcode to clear the
-        // data stack of the current procedure.
-        inputPush (genPurpose);  // save the return address
-
-        inputPush(gblInputStkPtr - (opr1 + 2)); // pushes a proc input base address index.
-        // you'll need to read the documentation
-        // to fully understand why. Meanwhile, see how it
-        // is used in case LTHING
-        // - we add 2 because we also keep the data stack pointer and
-        //   the return address in this stack.
-
+        inputPush (gblStkPtr);
+        inputPush (genPurpose);
+        inputPush(gblInputStkPtr - (opr1 + 2));
         return;
     }
-
-    ////////////////////////////////////////////////////////////////////////////////////////
-
     switch (opcode) {
     case CODE_END:
         gblLogoIsRunning = 0;
@@ -103,31 +75,22 @@ void evalOpcode(unsigned char opcode) {
         gblRepeatCount = 0;
         break;
     case NUM8:
-        ////printf(usb_cdc_putc,"NUM8 ");
         int8 Hi3 = fetchNextOpcode();
-        //printf(usb_cdc_putc," %d \n",Hi3);
         stkPush(Hi3);
         break;
     case NUM16:
-        //printf(usb_cdc_putc,"NUM16 ");
         int8 Hi2 = fetchNextOpcode();
         int8 Lo2 = fetchNextOpcode();
-        unsigned int16
-        teste4 = Hi2 << 8;
+        unsigned int16 teste4 = Hi2 << 8;
         teste4 += Lo2;
-        //printf(usb_cdc_putc," %Lu \n",teste4);
         stkPush (teste4);
         break;
     case LIST:
-        //printf(usb_cdc_putc,"LIST ");
         stkPush(gblMemPtr + 2); //incremento de 2 em 2
         gblMemPtr += (2 * fetchNextOpcode());
-        //printf(usb_cdc_putc,"LIST  gblMemPtr %Lu \n",gblMemPtr);
         break;
     case EOL:
-        //printf(usb_cdc_putc,"EOL ");
         genPurpose = stkPop();
-        //printf(usb_cdc_putc,"EOL %Lu \n",genPurpose);
         if (genPurpose > gblMemPtr) {
             //printf(usb_cdc_putc,"genPurpose >>>> gblMemPtr");
             gblMemPtr = genPurpose;
@@ -145,7 +108,6 @@ void evalOpcode(unsigned char opcode) {
         }
         break;
     case EOLR:
-        //printf(usb_cdc_putc,"EOLR\n");
         if (stkPop()) {   // if condition is true
             stkPop();        // throw away the loop address
             gblMemPtr = stkPop(); // fetch the next command address
@@ -153,22 +115,15 @@ void evalOpcode(unsigned char opcode) {
             gblMemPtr = stkPop();
             stkPush (gblMemPtr);
             delay_ms(5); // this prevents the waituntil loop to execute too rapidly
-            // which has proven to cause some problems when reading
-            // sensor values.
+            // which has proven to cause some problems when reading sensor values.
         }
         break;
-
-        /////////////////////////////////////////////////////////////
-        // retrieve procedure input
     case LTHING:
         genPurpose = 2 * fetchNextOpcode();  // index of the input variable
         opr1 = inputPop();  // base address in the input stack
         inputPush(opr1);    // push the base address back to the stack.
         stkPush (gblInputStack[opr1 + genPurpose]);
         break;
-
-        /////////////////////////////////////////////////////////////
-        // return to the parent procedure
     case STOP:
     case OUTPUT:
         if (opcode == OUTPUT){
@@ -191,7 +146,6 @@ void evalOpcode(unsigned char opcode) {
             stkPush (genPurpose);
         }
         break;
-
     case REPEAT:
         gblLoopAddress = stkPop();
         gblRepeatCount = stkPop();
@@ -208,7 +162,6 @@ void evalOpcode(unsigned char opcode) {
             gblMemPtr = stkPop();
         }
         break;
-
     case COND_IF:
         opr1 = stkPop();  // if true pointer address
         opr2 = stkPop();  // condition
@@ -217,7 +170,6 @@ void evalOpcode(unsigned char opcode) {
             gblMemPtr = opr1;
         }
         break;
-
     case COND_IFELSE:
         opr1 = stkPop(); // if false pointer address
         opr2 = stkPop(); // if true pointer address
@@ -229,15 +181,9 @@ void evalOpcode(unsigned char opcode) {
             gblMemPtr = opr1;
         }
         break;
-
     case BEEP:
-        //printf(usb_cdc_putc,"BEEP\n");
         beep();
         break;
-
-    case NOTE:
-        break;
-
     case WAITUNTIL:
         gblLoopAddress = stkPop();
         // these will be poped by EOLR
@@ -245,9 +191,7 @@ void evalOpcode(unsigned char opcode) {
         stkPush (gblLoopAddress); // address while still repeating
         gblMemPtr = gblLoopAddress;
         break;
-
     case LOOP:
-        //printf(usb_cdc_putc,"LOOP\n");
         gblLoopAddress = stkPop(); // the begining of loop
         gblRepeatCount = 0; // disable this counter (loop forever)
         stkPush(0);   // this distinguishes LOOP from Repeat. (see EOL)
@@ -255,35 +199,28 @@ void evalOpcode(unsigned char opcode) {
         // so that EOL will loop
         gblMemPtr = gblLoopAddress;
         break;
-
     case WAIT:
         gblWaitCounter = stkPop() * 4;
         break;
-
     case TIMER:
-        stkPush (gblTimer); // gblTimer increases every 1ms. See in RTCC interrupt
+        stkPush(gblTimer); // gblTimer increases every 1ms. See in RTCC interrupt
         break;
-
     case RESETT:
         gblTimer = 0;
         break;
-
     case SEND:
         genPurpose = stkPop();
         break;
-
     case IR:
         stkPush (gblMostRecentlyReceivedByte);
         gblNewByteHasArrivedFlag = 0;
         break;
-
     case NEWIR:
         stkPush (gblNewByteHasArrivedFlag);
         break;
-
     case RANDOM:
-        stkPush (rand());break;
-
+        stkPush (rand());
+        break;
     case OP_PLUS:
     case OP_MINUS:
     case OP_MULTIPLY:
@@ -334,13 +271,9 @@ void evalOpcode(unsigned char opcode) {
         };
         stkPush(opr1);
         break;
-
     case OP_NOT:
         stkPush(!stkPop());
         break;
-
-        ///////////////////////////////////////////////////////////////////////
-        // Global variables
     case SETGLOBAL:
         genPurpose = stkPop();// this is the value
         globalVariables[stkPop()] = genPurpose;
@@ -348,18 +281,12 @@ void evalOpcode(unsigned char opcode) {
     case GETGLOBAL:
         stkPush(globalVariables[stkPop()]);
         break;
-
-        ///////////////////////////////////////////////////////////////////////
-        //  Global Array
-
     case ASET:
         opr2 = stkPop();// this is the value to be stored
         opr1 = stkPop() * 2;// this is the array index. Each entry is two bytes wide.
         genPurpose = ARRAY_BASE_ADDRESS + stkPop();// this is the base address of the array.
-
         flashSetWordAddress(genPurpose + opr1);
         flashWrite(opr2);
-
         break;
     case AGET:
         opr1 = stkPop() * 2;// this is the array index. Each entry is two bytes wide.
@@ -367,7 +294,6 @@ void evalOpcode(unsigned char opcode) {
         opr2 = read_program_eeprom(genPurpose + opr1);
         stkPush(opr2);
         break;
-        //  Data collection commands
     case RECORD:
         genPurpose = stkPop();
         // PCM parts (14 bit PICs like the 16F877) uses an external EEPROM for data Logging storage
@@ -395,37 +321,19 @@ void evalOpcode(unsigned char opcode) {
         }
         gblRecordPtr = 0;
         break;
-    case WHEN:
-        break;
-    case WHENOFF:
-        break;
-    case M_A:
-        gblActiveMotors = 0b00000001;  // set bit 0
-        break;
-    case M_B:
-        gblActiveMotors = 0b00000010;// set bit 1
-        break;
-    case M_AB:
-        gblActiveMotors = 0b00000011;
-        break;
-        // Look at how M_ON, M_ONFOR, and M_OFF work carefully.
-        // - M_ON, M_ONFOR starts by turning motors on.
-        // - M_ON breaks right after while M_ONFOR continues.
     case M_OFF:
-        i++;
+        MotorControl(MTR_OFF);
     case M_THATWAY:
-        i++;
+        MotorControl(MTR_THATWAY);
     case M_THISWAY:
-        i++;
+        MotorControl(MTR_THISWAY);
     case M_RD:
-        i++;
+        MotorControl(MTR_RD);
     case BRAKE:
-        i++;
+        MotorControl(MTR_COAST);
     case M_ON:
     case M_ONFOR:
-        // Moved to motorCortol() instead
-        // SetMotorMode(MOTOR_NORMAL);
-        MotorControl(i);
+        MotorControl(MTR_ON);
         if (opcode == M_ONFOR) {
             set_on_for(stkPop()*4);
         }
@@ -433,43 +341,22 @@ void evalOpcode(unsigned char opcode) {
     case SETPOWER:
         SetMotorPower(stkPop());
         break;
-    case BSEND:
-    case BSR:
-        // These two opcodes are not supported.
-        // So, halt the board if they are used.
-        Halt();
-        break;
-    case M_C:
-        gblActiveMotors = 0b00000100;// set bit 2
-        break;
-    case M_D:
-        gblActiveMotors = 0b00001000;// set bit 3
-        break;
-    case M_CD:
-        gblActiveMotors = 0b00001100;
-        break;
-    case M_ABCD:
-        gblActiveMotors = 0b00001111;
-        break;
     case REALLY_STOP:
-        gblLogoIsRunning = 0;
-        output_low(RUN_LED);
+        start_stop_logo_machine = 1;
         break;
-    case EB:// reads byte from memory
+    case EB:
         stkPush(read_program_eeprom(stkPop()));
         break;
-    case DB:// deposit byte to memory
-        /// Note: I have checked this code. I might have swapped opr1 and opr2
-        opr1 = stkPop();// value to write
-        opr2 = stkPop();// memory address
+    case DB:
+        opr1 = stkPop();
+        opr2 = stkPop();
         flashSetWordAddress(opr2);
         flashWrite(opr1);
-
         break;
-    case LOW_BYTE:// returns low byte
+    case LOW_BYTE:
         stkPush(stkPop() & 0xff);
         break;
-    case HIGH_BYTE:// returns high byte
+    case HIGH_BYTE:
         stkPush(stkPop() >> 8);
         break;
     case SENSOR1:
@@ -480,18 +367,13 @@ void evalOpcode(unsigned char opcode) {
     case SENSOR6:
     case SENSOR7:
     case SENSOR8:
-        // we need the following IF because the opcode for sensor1&2 are separate from the rest.
-        // If this wasn't the case we could have just done .. i = opcode - SENSOR1;
         if (opcode < SENSOR3) {
             i = opcode - SENSOR1;
         } else {
             i = opcode - SENSOR3 + 2;
         }
-
         stkPush(readSensor(i));
         break;
-
-        // read sensor and treat it as a on-off switch (0 or 1)
     case SWITCH1:
     case SWITCH2:
     case SWITCH3:
@@ -516,22 +398,17 @@ void evalOpcode(unsigned char opcode) {
     case SERVO_SET_H:
     case SERVO_LT:
     case SERVO_RT:
-        // Caution: SetMotorMode() must be called AFTER the
-        // MotorControl() commands
-
         MotorControl(MTR_ON);
         MotorControl(MTR_THISWAY);
         SetMotorMode(MOTOR_SERVO);
-
         i = stkPop();
-
         if (opcode == SERVO_SET_H) {
             SetMotorPower(i);
-        } else if (opcode == SERVO_LT)
-        ChangeMotorPower(i);
-        else
-        ChangeMotorPower(-1*i);
-
+        } else if (opcode == SERVO_LT){
+            ChangeMotorPower(i);
+        } else {
+            ChangeMotorPower(-1*i);
+        }
         break;
     case TALK_TO_MOTOR:
         gblActiveMotors = stkPop();
@@ -549,7 +426,7 @@ void evalOpcode(unsigned char opcode) {
         stkPush(i2c_read(stkPop()));
         break;
     default:
-        Halt();
-	break;
+        start_stop_logo_machine = 1;
+        break;
     };
 }
