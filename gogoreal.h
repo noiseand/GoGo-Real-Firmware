@@ -27,7 +27,7 @@ unsigned int16 stkPop(void);
 unsigned int8 readUsbBuffer();
 void write_logo_code();
 void updateUsbBuffer();
-
+void set_on_for(unsigned int16 delay);
 void inputPush(unsigned int16 stackItem);
 unsigned int16 inputPop(void);
 unsigned int16 fetchNextOpcode();

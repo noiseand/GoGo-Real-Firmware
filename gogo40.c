@@ -78,19 +78,8 @@ void sendBytes(unsigned int16 memPtr, unsigned int16 count) {
 }
 
 unsigned int16 fetchNextOpcode() {
-    unsigned int16 opcode;
-
-    // if an ONFOR command was launched we must turn motor off before
-    // continuing. When gblONFORNeedsToFinish is falged, we simulate
-    // a motor off command.
-    if (gblONFORNeedsToFinish) {
-        gblONFORNeedsToFinish = 0;
-        return(M_OFF);
-    } else {
-        opcode = read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
-        gblMemPtr+=2;
-    }
-
+    unsigned int16 opcode = read_program_eeprom(FLASH_USER_PROGRAM_BASE_ADDRESS + gblMemPtr);
+    gblMemPtr+=2;
     return opcode;
 }
 
@@ -169,7 +158,7 @@ void clock_isr() {
 //Prescaler 1:8; TMR1 Preload = 28036; Actual Interrupt Time : 25 ms
 #int_timer1
 void timer1ISR() {
-    set_timer1 (T1_COUNTER);
+    set_timer1(T1_COUNTER);
     gblTimer++;
     if (gblWaitCounter > 0) {
         gblWaitCounter--;
@@ -421,7 +410,15 @@ unsigned int16 readSensor(int sensorNo) {
     return read_adc();
 }
 
-
+void set_on_for(unsigned int16 delay) {
+    int i;
+    for (i = 0; i < MotorCount; i++) {
+        if ((gblActiveMotors >> i) & 1) {
+            motor_onfor[i] = gblTimer + delay;
+            motor_onfor_needs_to_finish[i] = 1;
+        }
+    }
+}
 
 void ProcessInput() {
     unsigned int8 InByte;
@@ -601,7 +598,6 @@ void init_variables() {
     gblRWCount = 0;
     gblLoopAddress=0;
     gblRepeatCount=0;
-    gblONFORNeedsToFinish=0;
     gblCurSensorChannel = defaultPort;
     
     int i;
@@ -662,7 +658,7 @@ void main() {
         gblLogoIsRunning = 0;
     }
     
-    
+    int8 i;
     while (1) {
         updateUsbBuffer();
         ProcessInput();
@@ -682,12 +678,19 @@ void main() {
                 output_high(RUN_LED);
             }
             gblWaitCounter = 0;
-            gblONFORNeedsToFinish = 0;
             start_stop_logo_machine = FALSE;
         }
         if (gblLogoIsRunning) {
             if (!gblWaitCounter){
                 evalOpcode(fetchNextOpcode());
+            }
+        }
+        for (i = 0; i < MotorCount; i++) {
+            if(motor_onfor_needs_to_finish[i] == 1){
+                if (gblTimer > motor_onfor[i]){
+                    MotorOFF(i);
+                    motor_onfor_needs_to_finish[i] = 0;
+                }
             }
         }
     }

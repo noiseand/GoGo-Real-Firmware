@@ -38,7 +38,8 @@ unsigned int16 gblWaitCounter =0; // wait to execute logo code
 int16  MotorENPins [MotorCount]={  MTR1_EN, MTR2_EN, MTR3_EN, MTR4_EN};
 int16  MotorCWPins [MotorCount]={  MTR1_CW, MTR2_CW, MTR3_CW, MTR4_CW};
 int16  MotorCCPins [MotorCount]={  MTR1_CC, MTR2_CC, MTR3_CC, MTR4_CC};
-
+unsigned int16 motor_onfor[MotorCount] ={  0, 0, 0, 0};
+int1 motor_onfor_needs_to_finish[MotorCount] ={  0, 0, 0, 0};
 
 
 int gblCurSensorChannel;
@@ -71,4 +72,3 @@ unsigned int16  gblMemPtr;     // FLASH/EEPROM pointer
 unsigned int16 gblRWCount;    // Read/Write length
 int16 gblLoopAddress=0;   // Stores the start address of a Loop
 int16 gblRepeatCount=0;  // Tracks the progress of the repeat command
-int1 gblONFORNeedsToFinish=0;  // flags when onfor is launched it causes fetchNextOpcode() to return an Off command the next time it is called

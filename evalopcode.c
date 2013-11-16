@@ -427,10 +427,7 @@ void evalOpcode(unsigned char opcode) {
         // SetMotorMode(MOTOR_NORMAL);
         MotorControl(i);
         if (opcode == M_ONFOR) {
-            gblWaitCounter = stkPop()*4; // the main() loop will pause until
-            // gblWaitCounter is 0. Timer1 ISR
-            // subtracts its value every 0.1 sec.
-            gblONFORNeedsToFinish = 1;// this will cause fetchNextOpcode()
+            set_on_for(stkPop()*4);
         }
         break;
     case SETPOWER:
