@@ -159,6 +159,7 @@ void main() {
                 } else {// extended_linear_address == 0 , recebendo o codigo principal
                     if (writeAddr <= LOADER_SIZE) {
                         printf(usb_cdc_putc, "%c", BOOTLOADER_OVERWRITE);
+                        continue;
                     } else {
                         write_program(writeAddr,Buffer,recLen);
                     }

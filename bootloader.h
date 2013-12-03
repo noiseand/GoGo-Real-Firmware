@@ -37,7 +37,7 @@
 #define CMD_MODE     5
 
 
-#define LOADER_SIZE        (0x174F)
+#define LOADER_SIZE        (0x17EF)
 #define local_flag         0x25
 #reserve local_flag
 
