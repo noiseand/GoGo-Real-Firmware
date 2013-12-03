@@ -1,0 +1,60 @@
+[PROJECT]
+Target=bootloader.hex
+Processor_Text=PIC18F4550
+CCSVersion=5.015
+Compiler=PCH
+Development_Mode=
+ToolSuite=CCS
+[Target Data]
+FileList=bootloader.c
+BuildTool=C-COMPILER
+OptionString=+FH
+AdditionalOptionString=
+BuildRequired=1
+[Directories]
+Include=C:\Program Files (x86)\PICC\Devices\;C:\Program Files (x86)\PICC\Drivers\;Z:\home\tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\home\tanure\Dropbox\Software\PCWH\PICC\Devices\;Z:\home\tanure\Tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\home\tanure\Tanure\Dropbox\Software\PCWH\PICC\Devices\
+Library=
+LinkerScript=
+[bootloader.c]
+Type=4
+Path=
+FileList=
+BuildTool=
+OptionString=
+AdditionalOptionString=
+[mru-list]
+1=bootloader.c
+[Opened Files]
+1=bootloader.c
+2=
+3=global_variables.h
+4=gogo40.c
+5=gogo40.h
+6=gogoreal.h
+7=
+8=
+[defines]
+enabled=0
+chip=1
+D1=
+V1=
+[fileformats]
+forcecoff=1
+debug=4
+error=2
+object=0
+list=0
+scratch=0
+sta=1
+tre=1
+allerrors=1
+allwarnings=1
+stayupne=3
+stayupoe=0
+[Windows]
+0=0000 %S 0 0 796 451 3 0
+[CompilerVersion]
+Fixed=
+[Units]
+Count=1
+1=bootloader (main)
