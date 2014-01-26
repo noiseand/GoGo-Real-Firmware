@@ -296,5 +296,31 @@
 #define CL_I2C_WRITE          93
 #define CL_I2C_READ           94
 
+// Tone sounds
 
-
+#define mute    0 //T2_DISABLED,     0,  1 //Mute
+#define B3   4061 //T2_DIV_BY_16,  253,  6 //B3       261.63    //Prescaler 1:16; Postscaler 1:6; TMR2 Preload = 253; Actual Interrupt Time : 2,0245 ms
+#define C4   3837 //T2_DIV_BY_16,  239,  6 //C        261.63    //Prescaler 1:16; Postscaler 1:6; TMR2 Preload = 239; Actual Interrupt Time : 1.9125 ms
+#define CC4  3613 //T2_DIV_BY_16,  225,  6 //C#       277.18    //Prescaler 1:16; Postscaler 1:6; TMR2 Preload = 225; Actual Interrupt Time : 1.8005 ms
+#define D4   3421 //T2_DIV_BY_16,  213,  6 //D        293.66    //Prescaler 1:16; Postscaler 1:6; TMR2 Preload = 213; Actual Interrupt Time : 1.7045 ms
+#define DC4  3867 //T2_DIV_BY_16,  241,  5 //D#       311.13    //Prescaler 1:16; Postscaler 1:5; TMR2 Preload = 241; Actual Interrupt Time : 1.607083333 ms
+#define E4   3643 //T2_DIV_BY_16,  227,  5 //E        329.63    //Prescaler 1:16; Postscaler 1:5; TMR2 Preload = 227; Actual Interrupt Time : 1.51375 ms
+#define F4   3451 //T2_DIV_BY_16,  215,  5 //F        349.23    //Prescaler 1:16; Postscaler 1:5; TMR2 Preload = 215; Actual Interrupt Time : 1.43375 ms
+#define FC4  4080 //T2_DIV_BY_4,   253, 16 //F#       369.99    //Prescaler 1:4; Postscaler 1:16; TMR2 Preload = 253; Actual Interrupt Time : 1.350666667 ms
+#define G4   3856 //T2_DIV_BY_4,   239, 16 //G        392.00    //Prescaler 1:4; Postscaler 1:16; TMR2 Preload = 239; Actual Interrupt Time : 1.276 ms
+#define GC4  3886 //T2_DIV_BY_4,   241, 15 //G#       415.30    //Prescaler 1:4; Postscaler 1:15; TMR2 Preload = 241; Actual Interrupt Time : 1.20625 ms
+#define A4   3916 //T2_DIV_BY_4,   243, 14 //A        440.00    //Prescaler 1:4; Postscaler 1:14; TMR2 Preload = 243; Actual Interrupt Time : 1.135166667 ms
+#define AC4  3978 //T2_DIV_BY_4,   247, 13 //A#       466.16    //Prescaler 1:4; Postscaler 1:13; TMR2 Preload = 247; Actual Interrupt Time : 1.071416667 ms
+#define B4   4072 //T2_DIV_BY_4,   253, 12 //B        493.88    //Prescaler 1:4; Postscaler 1:12; TMR2 Preload = 253; Actual Interrupt Time : 1.013 ms
+#define C5   3848 //T2_DIV_BY_4,   239, 12 //C5       523.25    //Prescaler 1:4; Postscaler 1:12; TMR2 Preload = 239; Actual Interrupt Time : 957 us
+#define CC5  3958 //T2_DIV_BY_4,   246, 11 //C#5      1108.73   //Prescaler 1:4; Postscaler 1:11; TMR2 Preload = 246; Actual Interrupt Time : 902,916666667 us
+#define D5   3734 //T2_DIV_BY_4,   232, 11 //D5       1108.73   //Prescaler 1:4; Postscaler 1:11; TMR2 Preload = 232; Actual Interrupt Time : 851,583333333 us
+#define DC5  3876 //T2_DIV_BY_4,   241, 10 //D#5      1244.51   //Prescaler 1:4; Postscaler 1:10; TMR2 Preload = 241; Actual Interrupt Time : 804,166666667 us
+#define E5   4066 //T2_DIV_BY_4,   253,  9 //E5       1244.51   //Prescaler 1:4; Postscaler 1: 9; TMR2 Preload = 253; Actual Interrupt Time : 759,75 us
+#define F5   3826 //T2_DIV_BY_4,   238,  9 //F5       1396.91   //Prescaler 1:4; Postscaler 1: 9; TMR2 Preload = 238; Actual Interrupt Time : 714,75 us
+#define FC5  4064 //T2_DIV_BY_4,   253,  8 //F#5      1479.98   //Prescaler 1:4; Postscaler 1: 8; TMR2 Preload = 253; Actual Interrupt Time : 675,333333333 us                   
+#define G5   3840 //T2_DIV_BY_4,   239,  8 //G5       1567.98   //Prescaler 1:4; Postscaler 1: 8; TMR2 Preload = 239; Actual Interrupt Time : 638 us
+#define GC5  3616 //T2_DIV_BY_4,   225,  8 //G#5      1661.22   //Prescaler 1:4; Postscaler 1: 8; TMR2 Preload = 225; Actual Interrupt Time : 600,666666667 us
+#define A5   3902 //T2_DIV_BY_4,   243,  7 //A5       1760.00   //Prescaler 1:4; Postscaler 1: 7; TMR2 Preload = 243; Actual Interrupt Time : 567,583333333 us                                 
+#define AC5  3694 //T2_DIV_BY_4,   230,  7 //A#5      1864.66   //Prescaler 1:4; Postscaler 1: 7; TMR2 Preload = 230; Actual Interrupt Time : 537,25 us
+#define B5   4060 //T2_DIV_BY_4,   253,  6 //B5       1975.53   //Prescaler 1:4; Postscaler 1: 6; TMR2 Preload = 253; Actual Interrupt Time : 506,5 
