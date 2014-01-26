@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with GoGo Real.  If not, see <http://www.gnu.org/licenses/>.
  */
+int1 beep_is_high = 0;
 
 //Usb Buffer
 unsigned int8 usbBuffer[USB_BUFFER_SIZE];
