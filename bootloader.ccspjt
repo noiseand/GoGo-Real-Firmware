@@ -1,7 +1,7 @@
 [PROJECT]
 Target=bootloader.hex
 Processor_Text=PIC18F4550
-CCSVersion=5.015
+CCSVersion=5.017
 Compiler=PCH
 Development_Mode=
 ToolSuite=CCS
@@ -12,7 +12,7 @@ OptionString=+FH
 AdditionalOptionString=
 BuildRequired=1
 [Directories]
-Include=C:\Program Files (x86)\PICC\Devices\;C:\Program Files (x86)\PICC\Drivers\;Z:\home\tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\home\tanure\Dropbox\Software\PCWH\PICC\Devices\;Z:\home\tanure\Tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\home\tanure\Tanure\Dropbox\Software\PCWH\PICC\Devices\
+Include=C:\Program Files (x86)\PICC\Devices\;C:\Program Files (x86)\PICC\Drivers\;Z:\home\tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\home\tanure\Dropbox\Software\PCWH\PICC\Devices\;Z:\home\tanure\Tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\home\tanure\Tanure\Dropbox\Software\PCWH\PICC\Devices\;Z:\media\tanure\Dropbox\Software\PCWH\PICC5\Drivers\;Z:\media\tanure\Dropbox\Software\PCWH\PICC5\Devices\
 Library=
 LinkerScript=
 [bootloader.c]

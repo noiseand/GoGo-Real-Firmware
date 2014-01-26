@@ -4,11 +4,10 @@ Development_Mode=
 Processor=0x4550
 Processor_Text=PIC18F4550
 ToolSuite=CCS
-CCSVersion=5.015
+CCSVersion=5.017
 Compiler=PCH
 [Directories]
-Include=C:\Program Files\PICC\devices\;C:\Program Files\PICC\drivers\;C:\Program Files (x86)\PICC\Drivers\;C:\Program Files (x86)\PICC\Devices\;Z:\home\tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\home\tanure\Dropbox\Software\PCWH\PICC\Devices\;Z:\home\tanure\Tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\home\tanure\Tanure\Dropbox\Software\PCWH\PICC\Devices\
-Library=
+Include=C:\Program Files\PICC\devices\;C:\Program Files\PICC\drivers\;C:\Program Files (x86)\PICC\Drivers\;C:\Program Files (x86)\PICC\Devices\;Z:\home\tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\home\tanure\Dropbox\Software\PCWH\PICC\Devices\;Z:\home\tanure\Tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\home\tanure\Tanure\Dropbox\Software\PCWH\PICC\Devices\;Z:\media\tanure\Dropbox\Software\PCWH\PICC\Drivers\;Z:\media\tanure\Dropbox\Software\PCWH\PICC\Devices\;Z:\media\tanure\Dropbox\Software\PCWH\PICC5\Drivers\;Z:\media\tanure\Dropbox\Software\PCWH\PICC5\Devices\
 LinkerScript=
 [Target Data]
 FileList=gogo40.c
