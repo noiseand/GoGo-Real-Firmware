@@ -21,7 +21,7 @@
 /////////////////////////////////////////////////////////////////
 //  Function Declaration
 /////////////////////////////////////////////////////////////////
-
+void tone(unsigned int16 tone);
 void stkPush(unsigned int16 stackItem);
 unsigned int16 stkPop(void);
 unsigned int8 readUsbBuffer();
@@ -34,7 +34,6 @@ unsigned int16 fetchNextOpcode();
 void evalOpcode(unsigned char opcode);
 void flashSetWordAddress(int16 address);
 void flashWrite(int16 InByte);
-void Ping(int Param);
 void TalkToMotor(int MotorBits);
 void MotorControl(int MotorCmd);
 void SetMotorPower(int Power);
@@ -59,8 +58,4 @@ unsigned int16 readSensor(int sensorNo);
 void ProcessInput();
 void init_variables();
 void intro();
-void Halt();
 void initBoard();
-
-void timer2ISR();
-void version();
