@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2010-2013 Lucas Ani­bal Tanure Alves - ME
+ * Copyright (C) 2010-2013 Lucas AniÂ­bal Tanure Alves - ME
  * Contact   Lucas Tanure [ltanure@gmail.com] 
  *
  * This file is part of GoGo Real.
@@ -101,7 +101,6 @@ void clock_isr() {
                         if (((gblMotorMode >> gblCurrentDutyIndex) & 1) == MOTOR_NORMAL) {
                             if (((gblMotorDir >> gblCurrentDutyIndex) & 1)){
                                 output_low(MotorCWPins[gblCurrentDutyIndex]);
-                                
                             } else {
                                 output_low(MotorCCPins[gblCurrentDutyIndex]);
                             }
@@ -154,26 +153,7 @@ void clock_isr() {
     set_rtcc(255-periodTilNextInterrupt);
 }
 
-//Timer1
-//Prescaler 1:8; TMR1 Preload = 28036; Actual Interrupt Time : 25 ms
-#int_timer1
-void timer1ISR() {
-    set_timer1(T1_COUNTER);
-    gblTimer++;
-    if (gblWaitCounter > 0) {
-        gblWaitCounter--;
-    }
-    if (input (RUN_BUTTON)) {
-        if(gblTimer - time_button_pressed > 15){ // 375 ms to wait a new press button
-            time_button_pressed = gblTimer;
-            start_stop_logo_machine = TRUE;
-        }
-    }
-}
 
-#int_timer2
-void timer2ISR() {
-}
 
 void MotorControl(unsigned int8 MotorCmd) {
     int i;
@@ -209,27 +189,27 @@ void SetMotorPower(unsigned int8 Power) {
     for (i = 0; i < MotorCount; i++) {
         if ((gblActiveMotors >> i) & 1) {
             switch (Power) {
-            case 1:
-                Power = 36;
-                break;
-            case 2:
-                Power = 73;
-                break;
-            case 3:
-                Power = 110;
-                break;
-            case 4:
-                Power = 146;
-                break;
-            case 5:
-                Power = 183;
-                break;
-            case 6:
-                Power = 219;
-                break;
-            case 7:
-                Power = 255;
-                break;
+                case 1:
+                    Power = 36;
+                    break;
+                case 2:
+                    Power = 73;
+                    break;
+                case 3:
+                    Power = 110;
+                    break;
+                case 4:
+                    Power = 146;
+                    break;
+                case 5:
+                    Power = 183;
+                    break;
+                case 6:
+                    Power = 219;
+                    break;
+                case 7:
+                    Power = 255;
+                    break;
             }
             gblMtrDuty[i] = Power;
         }
@@ -283,15 +263,15 @@ void ENLow(int MotorNo) {
 }
 
 void MotorON(int MotorNo) {
-   if ((gblMotorDir >> MotorNo) & 1) {
-      output_low(MotorCCPins[MotorNo]);
-      output_high(MotorCWPins[MotorNo]);
-   } else {
-      output_high(MotorCCPins[MotorNo]);
-      output_low(MotorCWPins[MotorNo]);
-   }
-   ENHigh(MotorNo);
-   gblMotorONOFF |= (1<<MotorNo);
+    if ((gblMotorDir >> MotorNo) & 1) {
+        output_low(MotorCCPins[MotorNo]);
+        output_high(MotorCWPins[MotorNo]);
+    } else {
+        output_high(MotorCCPins[MotorNo]);
+        output_low(MotorCWPins[MotorNo]);
+    }
+    ENHigh(MotorNo);
+    gblMotorONOFF |= (1<<MotorNo);
 }
 
 void MotorOFF(int MotorNo) {
@@ -300,7 +280,6 @@ void MotorOFF(int MotorNo) {
     output_low(MotorENPins[MotorNo]);
     ENLow(MotorNo);
     gblMotorONOFF &= ~(1<<MotorNo);
-  
 }
 
 void MotorRD(int MotorNo) {
@@ -328,35 +307,6 @@ void MotorCoast(int MotorNo) {
     output_low(MotorCCPins[MotorNo]);
     gblMotorONOFF &= ~(1<<MotorNo);
 }
-
-void beep() {
-    set_pwm1_duty(50);
-    delay_ms(50);
-    set_pwm1_duty(0);
-}
-
-
-void intro() {
-    set_pwm1_duty(50);
-    output_high(USER_LED);
-    output_high(RUN_LED);
-    delay_ms(50);
-    set_pwm1_duty(0);
-    delay_ms(50);
-    output_low(USER_LED);
-    output_low(RUN_LED);
-    set_pwm1_duty(50);
-    delay_ms(50);
-    set_pwm1_duty(0);
-    delay_ms(0);
-    output_high(USER_LED);
-    output_high(RUN_LED);
-    delay_ms(100);
-    output_low(USER_LED);
-    output_low(RUN_LED);
-}
-
-
 
 void flashSetWordAddress(int16 address) {
     gblFlashBaseAddress = address;
@@ -557,8 +507,6 @@ void init_variables() {
     usbBufferStart = 0;
     usbBufferEnd = 0;
     usbBufferSize = 0;
-    
-    
     gblLogoIsRunning = 0;
     time_button_pressed = 0; // last time that run button was pressed 
     start_stop_logo_machine = FALSE;
@@ -576,6 +524,7 @@ void init_variables() {
     gblLogoIsRunning = 0;
     gblWaitCounter = 0;
     gblTimer = 0;
+    beep_is_high = 0;
     gblFlashBuffer[getenv("FLASH_ERASE_SIZE")];
     gblFlashBufferPtr=0;
     gblFlashBaseAddress = 0;
@@ -589,7 +538,6 @@ void init_variables() {
     gblLoopAddress=0;
     gblRepeatCount=0;
     gblCurSensorChannel = defaultPort;
-    
     int i;
     for (i = 0; i < MotorCount+1; i++) {
         gblMtrDuty[i] = 0xff;
@@ -613,41 +561,93 @@ void initBoard() {
     output_low(USER_LED);
     output_low(PIN_C0);
     output_low(PIN_C1);
+    output_low(PIN_C2);
+
     for (i = 0; i < MotorCount; i++) {
         output_low (MotorENPins[i]);
         output_low (MotorCWPins[i]);
         output_low (MotorCCPins[i]);
     }
-    setup_ccp1(CCP_PWM);
     setup_timer_1(T1_INTERNAL | T1_DIV_BY_8);
-    setup_timer_2(T2_DIV_BY_16, 250, 16);
     setup_timer_0(RTCC_INTERNAL | RTCC_DIV_256 | RTCC_8_BIT);
-    enable_interrupts (INT_RTCC);
-    enable_interrupts (INT_TIMER1);
-    enable_interrupts (INT_TIMER2);
+    enable_interrupts(INT_RTCC);
+    enable_interrupts(INT_TIMER1);
     set_rtcc(0);
     set_timer1(T1_COUNTER);
-    
-
     enable_interrupts(GLOBAL);
 }
 
+void beep(){
+    tone(B5);
+    delay_ms(100);
+    tone(mute);
+}
+
+void intro() {
+    beep();
+    output_high(USER_LED);
+    output_high(RUN_LED);
+    delay_ms(100);
+    output_low(USER_LED);
+    output_low(RUN_LED);
+    beep();
+}
+
+//Timer1
+//Prescaler 1:8; TMR1 Preload = 28036; Actual Interrupt Time : 25 ms
+#int_timer1
+void timer1ISR() {
+    set_timer1(T1_COUNTER);
+    gblTimer++;
+    if (gblWaitCounter > 0) {
+        gblWaitCounter--;
+    }
+    if (input (RUN_BUTTON)) {
+        if(gblTimer - time_button_pressed > 15){ // 375 ms to wait a new press button
+            time_button_pressed = gblTimer;
+            start_stop_logo_machine = TRUE;
+        }
+    }
+}
+
+#int_timer2
+void timer2ITR() {
+    if(beep_is_high == 1){
+        output_high(PIN_C2);
+    } else {
+        output_low(PIN_C2);
+    }
+    beep_is_high = ~beep_is_high;
+}
+
+void tone(unsigned int16 beep){
+    if(beep == 0){
+        disable_interrupts(INT_TIMER2);
+    } else {
+        unsigned int8 postscaler = (beep & 0b00001110) >> 1;
+        unsigned int8 load = beep >> 4;
+        if(beep % 2 == 0){
+            setup_timer_2(T2_DIV_BY_16, beep, postscaler);
+        } else {
+            setup_timer_2(T2_DIV_BY_4, beep, postscaler);
+        }
+        enable_interrupts(INT_TIMER2);
+    }
+}
+
 void main() {
+    disable_interrupts(GLOBAL);
     init_variables();
     initBoard();
-    intro();
-    int16 uploadLen, counter;
-    int16 foo;
 
     usb_cdc_init();
     usb_init();
-    
     int eeprom = read_eeprom(LOGO_TURN_ON_ADDR);
     if(eeprom == LOGO_TURN_ON_FLAG){
         start_stop_logo_machine = 1;
         gblLogoIsRunning = 0;
     }
-    
+    intro();
     int8 i;
     while (1) {
         updateUsbBuffer();
@@ -658,7 +658,6 @@ void main() {
                 output_low (RUN_LED);
             }else{
                 srand (gblTimer);
-                //leitura da regiao onde começara o codigo logo
                 gblMemPtr = (read_program_eeprom(RUN_BUTTON_BASE_ADDRESS) << 8) + read_program_eeprom(RUN_BUTTON_BASE_ADDRESS + 2);
                 gblMemPtr *= 2;
                 gblStkPtr = 0;
@@ -682,8 +681,6 @@ void main() {
                     motor_onfor_needs_to_finish[i] = 0;
                 }
             }
-        }
+        }  
     }
 }
-
-
