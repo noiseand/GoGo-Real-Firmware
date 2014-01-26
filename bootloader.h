@@ -24,7 +24,7 @@
 //******************************************************************************//
 #include <18f4550.H>
 #device ADC=10 *=16
-#fuses HSPLL,NOWDT,NOPROTECT,USBDIV,PLL5,NODEBUG,CPUDIV1,VREGEN,NOLVP
+#fuses HSPLL,NOWDT,NOPROTECT,USBDIV,PLL5,NODEBUG,CPUDIV1,VREGEN,NOLVP,NOMCLR
 #use delay(clock=48000000)
 #use i2c(master, sda=PIN_B0, scl=PIN_B1, FORCE_HW,slow)
 
