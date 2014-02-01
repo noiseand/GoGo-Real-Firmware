@@ -39,18 +39,10 @@
 #define CMD_LED_ON      192
 #define CMD_LED_OFF     193
 #define CMD_READ_SENSOR 32
-#define CMD_TALK_TO_MOTOR   127
-#define CMD_MOTOR_CONTROL   200
-#define CMD_MOTOR_POWER      201
-#define MISC_SET_PWM     202
 
 
-#define MTR_ON       0
-#define MTR_OFF      1
-#define MTR_RD       2
-#define MTR_THISWAY  3
-#define MTR_THATWAY  4
-#define MTR_COAST    5
+
+
 
 #define LOGO_TURN_ON_ADDR 0x02
 #define LOGO_TURN_ON_FLAG 0xDB
@@ -73,41 +65,11 @@
 #define EEPROMuploadHeader1   0xEE
 #define EEPROMuploadHeader2   0x11
 
-
-/// How many motors does the board have.
-#define MotorCount      4
-
-/// Motor Modes
-#define MOTOR_NORMAL    0
-#define MOTOR_SERVO     1
-
-// Motor Pin Mappings
-
-#define MTR1_CW         PIN_B5
-#define MTR1_CC         PIN_B4
-#define MTR1_EN         PIN_B6
-
-#define MTR2_CW         PIN_B2
-#define MTR2_CC         PIN_D7
-#define MTR2_EN         PIN_B3
-
-#define MTR3_CW         PIN_D4
-#define MTR3_CC         PIN_D3
-#define MTR3_EN         PIN_D5
-
-#define MTR4_CW         PIN_C6
-#define MTR4_CC         PIN_C7
-#define MTR4_EN         PIN_D2
-
 #define PIC_TRIS_B   0b00000011
 #define PIC_TRIS_A   0b00101111
 #define PIC_TRIS_C   0b00000000
 #define PIC_TRIS_D   0b00000010
 #define PIC_TRIS_E   0b00000111
-
-
-#define MOTOR_AB_EN     PIN_B7   // controls the power to the motor chip
-#define MOTOR_CD_EN     PIN_D6   // controls the power to the motor chip
 
 
 //=========================================================
@@ -190,6 +152,16 @@
 #define CRICKET_CHECK   0x87
 
 
+#define CMD_TALK_TO_MOTOR   127
+#define CMD_MOTORS_ANGLE     202
+#define CMD_MOTORS_ON 205 
+#define CMD_MOTORS_OFF 206 
+#define CMD_MOTORS_REVERT 207 
+#define CMD_MOTORS_THISWAY 208
+#define CMD_MOTORS_THATWAY 209
+#define CMD_MOTORS_POWER 210
+#define CMD_MOTORS_CONFIG 211
+
 //////////////////////////////////////
 //
 //   Op code
@@ -240,27 +212,15 @@
 #define  ERASE                  43
 #define  WHEN                  44
 #define  WHENOFF               45
-#define  M_A                  46
-#define  M_B                  47
-#define  M_AB                  48
-#define  M_ON                  49
-#define  M_ONFOR               50
-#define  M_OFF                  51
-#define  M_THISWAY            52
-#define  M_THATWAY            53
-#define  M_RD                  54
+
 #define  SENSOR1               55
 #define  SENSOR2               56
 #define  SWITCH1               57
 #define  SWITCH2               58
-#define  SETPOWER               59
-#define  BRAKE                  60
+
+
 #define  BSEND                  61
 #define  BSR                  62
-#define  M_C                  63
-#define  M_D                  64
-#define  M_CD                  65
-#define  M_ABCD               66
 #define  FASTSEND               67
 #define  REALLY_STOP          68
 #define  EB                     69
@@ -289,15 +249,54 @@
 #define SERVO_LT              88
 #define SERVO_RT              89
 
-#define TALK_TO_MOTOR        90
 
-#define CL_I2C_START          91
-#define CL_I2C_STOP           92
-#define CL_I2C_WRITE          93
-#define CL_I2C_READ           94
+
+#define CL_I2C_START          100
+#define CL_I2C_STOP           101
+#define CL_I2C_WRITE          102
+#define CL_I2C_READ           103
+
+//##############################################################
+//New
+
+//Motors
+#define MTR_COUNT         4
+#define T0_COUNTER        64937
+#define MTR_MAX_INTRPS    400 // 400 * 0.05ms == 20ms
+#define MTR_DC_MAX_POWER  10
+
+#define MTR_AB_ENB     PIN_B7
+#define MTR_CD_ENB     PIN_D6
+
+#define M0_ENB         PIN_B6
+#define M0_S1          PIN_B5
+#define M0_S2          PIN_B4
+
+#define M1_ENB         PIN_B3
+#define M1_S1          PIN_B2
+#define M1_S2          PIN_D7
+
+#define M2_ENB         PIN_D5
+#define M2_S1          PIN_D4
+#define M2_S2          PIN_D3
+
+#define M3_ENB         PIN_D2
+#define M3_S1          PIN_C6
+#define M3_S2          PIN_C7
+
+#define SERVO 0 
+#define DC 1
+#define STEPPER 2
+
+#define M0 0
+#define M1 1
+#define M2 2
+#define M3 3
+
+
+
 
 // Tone sounds
-
 #define mute    0 //T2_DISABLED,     0,  1 //Mute
 #define B3   4061 //T2_DIV_BY_16,  253,  6 //B3       261.63    //Prescaler 1:16; Postscaler 1:6; TMR2 Preload = 253; Actual Interrupt Time : 2,0245 ms
 #define C4   3837 //T2_DIV_BY_16,  239,  6 //C        261.63    //Prescaler 1:16; Postscaler 1:6; TMR2 Preload = 239; Actual Interrupt Time : 1.9125 ms
@@ -323,4 +322,25 @@
 #define GC5  3616 //T2_DIV_BY_4,   225,  8 //G#5      1661.22   //Prescaler 1:4; Postscaler 1: 8; TMR2 Preload = 225; Actual Interrupt Time : 600,666666667 us
 #define A5   3902 //T2_DIV_BY_4,   243,  7 //A5       1760.00   //Prescaler 1:4; Postscaler 1: 7; TMR2 Preload = 243; Actual Interrupt Time : 567,583333333 us                                 
 #define AC5  3694 //T2_DIV_BY_4,   230,  7 //A#5      1864.66   //Prescaler 1:4; Postscaler 1: 7; TMR2 Preload = 230; Actual Interrupt Time : 537,25 us
-#define B5   4060 //T2_DIV_BY_4,   253,  6 //B5       1975.53   //Prescaler 1:4; Postscaler 1: 6; TMR2 Preload = 253; Actual Interrupt Time : 506,5 
+#define B5   4060 //T2_DIV_BY_4,   253,  6 //B5       1975.53   //Prescaler 1:4; Postscaler 1: 6; TMR2 Preload = 253; Actual Interrupt Time : 506,5
+
+
+// new opcodes
+
+
+#define OPC_ACTIVATE_MOTORS  90
+#define OPC_MOTORS_ON        92
+#define OPC_MOTORS_OFF       94
+#define OPC_MOTORS_REVERT    95
+#define OPC_MOTORS_THISWAY   96
+#define OPC_MOTORS_THATWAY   97
+
+#define OPC_MOTORS_ON_FOR    93
+#define OPC_MOTORS_POWER     98
+#define OPC_MOTORS_CONFIG    99
+#define OPC_MOTORS_ANGLE     91
+
+
+
+
+

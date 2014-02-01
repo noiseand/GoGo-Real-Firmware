@@ -83,230 +83,248 @@ unsigned int16 fetchNextOpcode() {
     return opcode;
 }
 
+void enableTimer0(){
+    intrp0_count = 0;
+    intrp0Enabled = 1;
+    set_rtcc(T0_COUNTER);
+    enable_interrupts(INT_RTCC);
+}
+
+void tryDisableTimer0(){
+    if(((mtrsOnInterpt >> M0) & 1) ){return;}//controled by timer0 ??
+    if(((mtrsOnInterpt >> M1) & 1) ){return;}//controled by timer0 ??
+    if(((mtrsOnInterpt >> M2) & 1) ){return;}//controled by timer0 ??
+    if(((mtrsOnInterpt >> M3) & 1) ){return;}//controled by timer0 ??
+    intrp0Enabled=0;
+    disable_interrupts(INT_RTCC);
+}
+
+void tryDisableChip(){
+    if((mtrsOnInterpt >> (M0+MTR_COUNT)) & 1){
+        if((mtrsOnInterpt >> (M1+MTR_COUNT)) & 1){
+            output_low(mtrChipEnable[0]);
+        }
+    }
+    if((mtrsOnInterpt >> (M2+MTR_COUNT)) & 1){
+        if((mtrsOnInterpt >> (M3+MTR_COUNT)) & 1){
+            output_low(mtrChipEnable[1]);
+        }
+    }
+}
+
+unsigned int8 motorMode(int MotorNo) {
+    if((mtrsMode >> ((MotorNo*2)+1)) & 1){
+        return STEPPER;
+    }
+    if((mtrsMode >> (MotorNo*2)) & 1){
+        return DC;
+    }
+    return SERVO;
+}
+
+void setNextInterupt(unsigned int8 MotorNo){
+    mtrNextInterrupt[MotorNo] = intrp0_count - (intrp0_count % MTR_DC_MAX_POWER);
+    mtrNextInterrupt[MotorNo]+= mtrRun[MotorNo];
+    if(mtrNextInterrupt[MotorNo] > intrp0_count){
+        mtrsDirectionNextTurn &= ~(1<<MotorNo);
+        return;
+    }
+    mtrsDirectionNextTurn |= (1<<MotorNo);
+    mtrNextInterrupt[MotorNo] += mtrWait[MotorNo];
+}
 
 
 #int_rtcc
-void clock_isr() {
-    int i;
-    unsigned int minDuty;
-    unsigned int nextDutyIndex;
-    unsigned int periodTilNextInterrupt;
-    ttTimer0++;
-    if (ttTimer0 == 2){
-        ttTimer0 =0;
-        do {
-            if (gblTimer0Counter < MotorCount) {
-                if (((gblMotorONOFF >> gblCurrentDutyIndex) & 1) == 1) {
-                    if (gblMtrDuty[gblCurrentDutyIndex] < 255) {
-                        if (((gblMotorMode >> gblCurrentDutyIndex) & 1) == MOTOR_NORMAL) {
-                            if (((gblMotorDir >> gblCurrentDutyIndex) & 1)){
-                                output_low(MotorCWPins[gblCurrentDutyIndex]);
-                            } else {
-                                output_low(MotorCCPins[gblCurrentDutyIndex]);
-                            }
-                        } else {
-                            output_low(MotorCCPins[gblCurrentDutyIndex]);
-                        }
-                    }
+void motor_ControlV2() {
+    int8 mtrIterator = 0;
+    for(mtrIterator = 0; mtrIterator < MTR_COUNT;mtrIterator++){
+        if((mtrsOnInterpt >> mtrIterator) & 1){//controled by timer0 ??
+            if(intrp0_count == mtrNextInterrupt[mtrIterator]){
+                if((mtrsDirectionNextTurn >> (mtrIterator)) & 1){
+                    mtrNextInterrupt[mtrIterator] += mtrRun[mtrIterator];
+                    output_high(mtrPwmPin[mtrIterator]);
+                } else{
+                    mtrNextInterrupt[mtrIterator] += mtrWait[mtrIterator];
+                    output_low(mtrPwmPin[mtrIterator]);
                 }
-            } else {
-                for (i=0 ; i<MotorCount ; i++) {
-                    if (((gblMotorONOFF >> i) & 1) == 1) {
-                        if (gblMtrDuty[i] > 0) {
-                            if (((gblMotorMode >> i) & 1) == MOTOR_NORMAL) {
-                                if (((gblMotorDir >> i) & 1)){
-                                    output_high(MotorCWPins[i]);
-                                } else {
-                                    output_high(MotorCCPins[i]);
-                                }
-                            } else {
-                                output_high(MotorCCPins[i]);
-                            }
-                        }
-                    }
-                }
-            }
-            minDuty = 255;
-            for (i=0;i<=MotorCount;i++) {
-                if ((minDuty >= gblMtrDuty[i]) && !(((gblDutyCycleFlag >> i) & 1))) {
-                    minDuty = gblMtrDuty[i];
-                    nextDutyIndex = i;
-                }
-            }
-            gblDutyCycleFlag |= (1<<nextDutyIndex);
-            if (gblTimer0Counter < MotorCount){
-                periodTilNextInterrupt = minDuty - gblMtrDuty[gblCurrentDutyIndex];
-            } else {
-                periodTilNextInterrupt = minDuty;
-            }
-            gblCurrentDutyIndex = nextDutyIndex;
-            if (gblTimer0Counter == MotorCount-1){
-                gblDutyCycleFlag = 0;
-            }
-            if (gblTimer0Counter < MotorCount){
-                gblTimer0Counter++;
-            } else {
-                gblTimer0Counter = 0;
-            }
-        } while ((periodTilNextInterrupt == 0) && (gblTimer0Counter > 0));
-    }
-    set_rtcc(255-periodTilNextInterrupt);
-}
-
-
-
-void MotorControl(unsigned int8 MotorCmd) {
-    int i;
-    for (i = 0; i < MotorCount; i++) {
-        if ((gblActiveMotors >> i) & 1) {
-            SetMotorMode (MOTOR_NORMAL);
-            switch (MotorCmd) {
-                case MTR_ON:
-                    MotorON(i);
-                    break;
-                case MTR_OFF:
-                    MotorOFF(i);
-                    break;
-                case MTR_RD:
-                    MotorRD(i);
-                    break;
-                case MTR_THISWAY:
-                    MotorThisWay(i);
-                    break;
-                case MTR_THATWAY:
-                    MotorThatWay(i);
-                    break;
-                case MTR_COAST:
-                    MotorCoast(i);
-                    break;
+                mtrsDirectionNextTurn ^= 1 << mtrIterator;
+                mtrNextInterrupt[mtrIterator] %= MTR_MAX_INTRPS;
             }
         }
     }
+    intrp0_count++;
+    intrp0_count %= MTR_MAX_INTRPS;
+    set_rtcc(T0_COUNTER);
 }
 
-void SetMotorPower(unsigned int8 Power) {
-    int i;
-    for (i = 0; i < MotorCount; i++) {
-        if ((gblActiveMotors >> i) & 1) {
-            switch (Power) {
-                case 1:
-                    Power = 36;
-                    break;
-                case 2:
-                    Power = 73;
-                    break;
-                case 3:
-                    Power = 110;
-                    break;
-                case 4:
-                    Power = 146;
-                    break;
-                case 5:
-                    Power = 183;
-                    break;
-                case 6:
-                    Power = 219;
-                    break;
-                case 7:
-                    Power = 255;
-                    break;
+void MotorON(unsigned int8 MotorNo) {
+    mtrsOnInterpt |= (1<<(MotorNo+MTR_COUNT)); //set on
+    unsigned int8 mode = motorMode(MotorNo);
+    if(mode == SERVO){ // 00
+        mtrNextInterrupt[MotorNo] = 0;
+        output_high(mtrEnable[MotorNo]);
+        output_high(mtrS2[MotorNo]);
+        output_low(mtrS1[MotorNo]);// pwm
+        enableTimer0();
+    }
+    if(mode == DC){ // 01
+        if((mtrsDirectionNextTurn >> (MotorNo+MTR_COUNT)) & 1){
+            MotorThisWay(MotorNo);
+        }else{
+            MotorThatWay(MotorNo);
+        }
+        if((mtrsOnInterpt >> MotorNo) & 1){//controled by timer0 ??
+            if(intrp0Enabled == 1) {
+                setNextInterupt(MotorNo);
+            }else{
+                mtrNextInterrupt[MotorNo] = 0;
+                enableTimer0();
             }
-            gblMtrDuty[i] = Power;
+        } else {
+            output_high(mtrEnable[MotorNo]);
         }
     }
-}
+    if(mode == STEPPER){ //10
 
-void ChangeMotorPower(int delta) {
-    int i;
-    for (i = 0; i < MotorCount; i++) {
-        if ((gblActiveMotors >> i) & 1) {
-            gblMtrDuty[i] = gblMtrDuty[i] + delta;
-        }
     }
+    output_high(mtrChipEnable[MotorNo/2]);
 }
 
-void SetMotorMode(int motorMode) {
-    int i;
-    for (i=0;i<MotorCount;i++) {
-        if ((gblActiveMotors >> i) & 1){
-            if (motorMode == MOTOR_NORMAL){
-                gblMotorMode &= ~(1<<i);
-            } else {
-                gblMotorMode |= (1<<i);
-            }
-        }
-    }
+void MotorOFF(unsigned int8 MotorNo) {
+    mtrsOnInterpt &= ~(1<<MotorNo); //not controled by timer0
+    mtrsOnInterpt &= ~(1<<(MotorNo+MTR_COUNT)); // set off
+    tryDisableTimer0();
+    tryDisableChip();
+    output_low(mtrEnable[MotorNo]);
+    output_low(mtrS1[MotorNo]);
+    output_low(mtrS2[MotorNo]);
+    mtrsDirectionNextTurn |= (1<<MotorNo); // set turnOn on next time
+    mtrNextInterrupt[MotorNo] = 0;
 }
 
-void ENHigh(int MotorNo) {
-    output_high(MotorENPins[MotorNo]);
-    output_high(MOTOR_AB_EN);
-    output_high(MOTOR_CD_EN);
-}
-
-void ENLow(int MotorNo) {
-    int foo;
-    output_low(MotorENPins[MotorNo]);
-    if(MotorNo%2){
-        foo=MotorNo-1;
-    }else{
-        foo=MotorNo+1;
-    }
-    if (!((gblMotorONOFF >> foo) & 1)){
-        return;
-    }
-    if (MotorNo<2){
-        output_low(MOTOR_AB_EN);
-    } else {
-        output_low(MOTOR_CD_EN);
-    }
-}
-
-void MotorON(int MotorNo) {
-    if ((gblMotorDir >> MotorNo) & 1) {
-        output_low(MotorCCPins[MotorNo]);
-        output_high(MotorCWPins[MotorNo]);
-    } else {
-        output_high(MotorCCPins[MotorNo]);
-        output_low(MotorCWPins[MotorNo]);
-    }
-    ENHigh(MotorNo);
-    gblMotorONOFF |= (1<<MotorNo);
-}
-
-void MotorOFF(int MotorNo) {
-    output_high(MotorCCPins[MotorNo]);
-    output_high(MotorCWPins[MotorNo]);
-    output_low(MotorENPins[MotorNo]);
-    ENLow(MotorNo);
-    gblMotorONOFF &= ~(1<<MotorNo);
-}
-
-void MotorRD(int MotorNo) {
-    if ((gblMotorDir >> MotorNo) & 1){
+void MotorRD(unsigned int8 MotorNo) {
+    if(motorMode(MotorNo) != DC){return;}
+    if((mtrsDirectionNextTurn >> (MotorNo+MTR_COUNT)) & 1){
         MotorThatWay(MotorNo);
-    } else {
+    }else{
         MotorThisWay(MotorNo);
     }
 }
 
-void MotorThisWay(int MotorNo) {
-    output_high(MotorCWPins[MotorNo]);
-    output_low(MotorCCPins[MotorNo]);  
-    gblMotorDir |= (1<<MotorNo);
+void MotorThisWay(unsigned int8 MotorNo) {
+    if(motorMode(MotorNo) != DC){return;}
+    mtrsDirectionNextTurn |= (1<<(MotorNo+MTR_COUNT));
+    if((mtrsOnInterpt >> (MotorNo+MTR_COUNT)) & 1){
+        output_high(mtrS1[MotorNo]);
+        output_low(mtrS2[MotorNo]);
+    }
 }
 
-void MotorThatWay(int MotorNo) {
-    output_low(MotorCWPins[MotorNo]);
-    output_high(MotorCCPins[MotorNo]);
-    gblMotorDir &= ~(1<<MotorNo);
+void MotorThatWay(unsigned int8 MotorNo) {
+    if(motorMode(MotorNo) != DC){return;}
+    mtrsDirectionNextTurn &= ~(1<<(MotorNo+MTR_COUNT));
+    if((mtrsOnInterpt >> (MotorNo+MTR_COUNT)) & 1){
+        output_low(mtrS1[MotorNo]);
+        output_high(mtrS2[MotorNo]);
+    }
 }
 
-void MotorCoast(int MotorNo) {
-    output_low(MotorCWPins[MotorNo]);
-    output_low(MotorCCPins[MotorNo]);
-    gblMotorONOFF &= ~(1<<MotorNo);
+void configureMotorMode(unsigned int8 MotorNo, unsigned int8 mode) {
+    if(mode == SERVO){ // 00
+        mtrsOnInterpt |= (1<<MotorNo); // set controll by timer0
+        mtrPwmPin[MotorNo] = mtrS1[MotorNo];//where pwm
+        mtrsMode &= ~(1<<(MotorNo*2));
+        mtrsMode &= ~(1<<((MotorNo*2)+1));
+        return;
+    }
+    if(mode == DC){ // 01
+        mtrPwmPin[MotorNo] = mtrEnable[MotorNo];//where pwm
+        mtrsMode |= (1<<(MotorNo*2));
+        mtrsMode &= ~(1<<((MotorNo*2)+1));
+        return;
+    }
+    if(mode == STEPPER){ //10
+        mtrsMode &= ~(1<<(MotorNo*2));
+        mtrsMode |= (1<<((MotorNo*2)+1));
+        return;
+    }
 }
+
+void MotorAngle(unsigned int8 MotorNo, unsigned int8 angle){
+    if(motorMode(MotorNo) != SERVO){return;}
+    unsigned int16 waitTime = (unsigned int16) MTR_MAX_INTRPS-angle;
+    if((mtrsOnInterpt >> (MotorNo+MTR_COUNT)) & 1){
+        while(intrp0_count == mtrRun[MotorNo]);
+    }else{
+        mtrsDirectionNextTurn |= (1<<MotorNo); // set turnOn on next time
+        mtrNextInterrupt[MotorNo] = 0;
+    }
+    mtrRun[MotorNo] = angle;
+    mtrWait[MotorNo] = waitTime;
+}
+
+void MotorPower(unsigned int8 MotorNo, unsigned int8 power){
+    if(motorMode(MotorNo) != DC){return;}
+    unsigned int16 waitTime = (unsigned int16) MTR_DC_MAX_POWER-power;
+    mtrsOnInterpt &= ~(1<<MotorNo);//give me time, so be not controled by timer0
+    mtrRun[MotorNo] = power;
+    mtrWait[MotorNo] = waitTime;
+    if(waitTime == 0){ // full power
+        //already not controled by timer0
+        tryDisableTimer0();
+        if((mtrsOnInterpt >> (MotorNo+MTR_COUNT)) & 1){
+            output_high(mtrPwmPin[MotorNo]);
+        }
+    }else{
+        if((mtrsOnInterpt >> (MotorNo+MTR_COUNT)) & 1){
+            if(intrp0Enabled==1){
+                setNextInterupt(MotorNo);
+            }else{
+                mtrsDirectionNextTurn |= (1<<MotorNo); // set turnOn on next time
+                mtrNextInterrupt[MotorNo] = 0;
+                enableTimer0();
+            }
+        }
+        mtrsOnInterpt |= (1<<MotorNo); // set controll by timer0
+    }
+}
+
+void MotorControl(int MotorCmd, unsigned int8 param) {
+    int MotorNo = 0;
+    for (MotorNo=0;MotorNo<MTR_COUNT;MotorNo++) {
+        if ((mtrsActive >> MotorNo) & 1) {
+            switch (MotorCmd) {
+                case OPC_MOTORS_ANGLE:
+                    MotorAngle(MotorNo,param);
+                    break;
+                case OPC_MOTORS_ON:
+                    MotorON(MotorNo);
+                    break;
+                case OPC_MOTORS_OFF:
+                    MotorOFF(MotorNo);
+                    break;
+                case OPC_MOTORS_REVERT:
+                    MotorRD(MotorNo);
+                    break;
+                case OPC_MOTORS_THISWAY:
+                    MotorThisWay(MotorNo);
+                    break;
+                case OPC_MOTORS_THATWAY:
+                    MotorThatWay(MotorNo);
+                    break;
+                case OPC_MOTORS_POWER:
+                    MotorPower(MotorNo,param);// 1 - 10 
+                    break;
+                case OPC_MOTORS_CONFIG:
+                    configureMotorMode(MotorNo,param);
+                    break;
+            }
+        }
+    }
+}
+
+
+
 
 void flashSetWordAddress(int16 address) {
     gblFlashBaseAddress = address;
@@ -353,8 +371,8 @@ unsigned int16 readSensor(int sensorNo) {
 
 void set_on_for(unsigned int16 delay) {
     int i;
-    for (i = 0; i < MotorCount; i++) {
-        if ((gblActiveMotors >> i) & 1) {
+    for (i = 0; i < MTR_COUNT; i++) {
+        if ((mtrsActive >> i) & 1) {
             motor_onfor[i] = gblTimer + delay;
             motor_onfor_needs_to_finish[i] = 1;
         }
@@ -418,23 +436,22 @@ void ProcessInput() {
             case CMD_LED_OFF:
                 output_low(USER_LED);
                 break;
-            case CMD_TALK_TO_MOTOR:
-                gblActiveMotors = readUsbBuffer();
+            case OPC_ACTIVATE_MOTORS:
+                mtrsActive = readUsbBuffer();
                 break;
-            case CMD_MOTOR_CONTROL:
+            //case CMD_MOTOR_CONTROL:
+            //    InByte = readUsbBuffer();
+            //    MotorControl(InByte,0);
+            //    break;
+            case CMD_MOTORS_POWER:
                 InByte = readUsbBuffer();
-                MotorControl(InByte);
+                MotorControl(CMD_MOTORS_POWER,InByte);
                 break;
-            case CMD_MOTOR_POWER:
+            case CMD_MOTORS_ANGLE:
                 InByte = readUsbBuffer();
-                SetMotorPower(InByte);
-                break;
-            case MISC_SET_PWM:
-                InByte = readUsbBuffer();
-                MotorControl(MTR_THISWAY);
-                SetMotorMode(MOTOR_SERVO);
-                SetMotorPower(InByte);
-                MotorControl(MTR_ON);
+                MotorControl(OPC_MOTORS_CONFIG,STEPPER);
+                MotorControl(OPC_MOTORS_ANGLE,InByte);
+                MotorControl(OPC_MOTORS_ON,0);
                 break;
             case CMD_MODE:
                 printf(usb_cdc_putc, "%c",70);//F
@@ -512,13 +529,7 @@ void init_variables() {
     start_stop_logo_machine = FALSE;
     gblWaitCounter =0; // wait to execute logo code
     gblCurSensorChannel = 0;
-    gblMotorMode=0b00000000;
-    gblActiveMotors= 0;
-    gblMotorDir=0;
-    gblMotorONOFF = 0;
-    gblTimer0Counter = MotorCount;
-    gblDutyCycleFlag = 0;
-    gblCurrentDutyIndex = 0;
+    mtrsActive= 0;
     gblMostRecentlyReceivedByte = 0;
     gblNewByteHasArrivedFlag = 0;
     gblLogoIsRunning = 0;
@@ -528,7 +539,6 @@ void init_variables() {
     gblFlashBuffer[getenv("FLASH_ERASE_SIZE")];
     gblFlashBufferPtr=0;
     gblFlashBaseAddress = 0;
-    ttTimer0 = 0; 
     gblStkPtr = 0;
     gblInputStkPtr = 0;
     gblInputStack[INPUT_STACK_SIZE];
@@ -538,10 +548,6 @@ void init_variables() {
     gblLoopAddress=0;
     gblRepeatCount=0;
     gblCurSensorChannel = defaultPort;
-    int i;
-    for (i = 0; i < MotorCount+1; i++) {
-        gblMtrDuty[i] = 0xff;
-    }
 }
 
 void initBoard() {
@@ -555,26 +561,26 @@ void initBoard() {
     setup_port_a(AN0_TO_AN7);
     setup_adc (ADC_CLOCK_INTERNAL);
     set_adc_channel(defaultPort);
-    output_low(MOTOR_AB_EN);
-    output_low(MOTOR_CD_EN);
     output_low(RUN_LED);
     output_low(USER_LED);
     output_low(PIN_C0);
     output_low(PIN_C1);
-    output_low(PIN_C2);
+    output_low(PIN_C2);//beep
 
-    for (i = 0; i < MotorCount; i++) {
-        output_low (MotorENPins[i]);
-        output_low (MotorCWPins[i]);
-        output_low (MotorCCPins[i]);
-    }
     setup_timer_1(T1_INTERNAL | T1_DIV_BY_8);
-    setup_timer_0(RTCC_INTERNAL | RTCC_DIV_256 | RTCC_8_BIT);
-    enable_interrupts(INT_RTCC);
+    setup_timer_0(RTCC_INTERNAL | T0_DIV_1); // 50us
+    disable_interrupts(INT_RTCC);
     enable_interrupts(INT_TIMER1);
-    set_rtcc(0);
+    set_rtcc(T0_COUNTER);
     set_timer1(T1_COUNTER);
     enable_interrupts(GLOBAL);
+    
+    unsigned int8 motorNo = 0;
+    for(motorNo=0;motorNo<MTR_COUNT;motorNo++){
+        configureMotorMode(MotorNo, DC);
+        MotorOFF(motorNo);
+        MotorThisWay(motorNo);
+    }
 }
 
 void beep(){
@@ -674,7 +680,7 @@ void main() {
                 evalOpcode(fetchNextOpcode());
             }
         }
-        for (i = 0; i < MotorCount; i++) {
+        for (i = 0; i < MTR_COUNT; i++) {
             if(motor_onfor_needs_to_finish[i] == 1){
                 if (gblTimer > motor_onfor[i]){
                     MotorOFF(i);

@@ -17,25 +17,15 @@
  * You should have received a copy of the GNU General Public License
  * along with GoGo Real.  If not, see <http://www.gnu.org/licenses/>.
  */
-int1 beep_is_high = 0;
-
 //Usb Buffer
 unsigned int8 usbBuffer[USB_BUFFER_SIZE];
 unsigned int8 usbBufferStart = 0;
 unsigned int8 usbBufferEnd = 0;
 unsigned int8 usbBufferSize = 0;
 
-//Main Control
-int1 start_stop_logo_machine = 0;
-int1 gblLogoIsRunning = 0;
-unsigned int16 time_button_pressed = 0;
-unsigned int16 gblTimer = 0;
-int gblCurSensorChannel = 0;
-
 //Logo Code Execution
 unsigned int16 gblWaitCounter =0;
-int1 motor_onfor_needs_to_finish[MotorCount] = {0, 0, 0, 0};
-unsigned int16 motor_onfor[MotorCount] = {0, 0, 0, 0};
+
 unsigned char gblMostRecentlyReceivedByte = 0;
 int1 gblNewByteHasArrivedFlag = 0;
 int16 gblLoopAddress=0;
@@ -48,26 +38,45 @@ int   gblInputStkPtr = 0;
 unsigned int16 gblStack[STACK_SIZE];
 unsigned int16 gblInputStack[INPUT_STACK_SIZE];
 
-
-//Motor
-int16  MotorENPins [MotorCount]={  MTR1_EN, MTR2_EN, MTR3_EN, MTR4_EN};
-int16  MotorCWPins [MotorCount]={  MTR1_CW, MTR2_CW, MTR3_CW, MTR4_CW};
-int16  MotorCCPins [MotorCount]={  MTR1_CC, MTR2_CC, MTR3_CC, MTR4_CC};
-int gblMotorMode=0b00000000;
-int gblActiveMotors;
-int gblMotorDir=0;
-int gblMotorONOFF = 0;
-int gblMtrDuty[MotorCount+1] = {0xff,0xff,0xff,0xff,0xff};
-int ttTimer0 = 0;
-unsigned int gblTimer0Counter = MotorCount; // Motor duty cycle counter.
-unsigned int gblDutyCycleFlag = 0;
-unsigned int gblCurrentDutyIndex = 0;
-
-
 unsigned int8  gblFlashBuffer[getenv("FLASH_ERASE_SIZE")];
 unsigned int8  gblFlashBufferPtr=0;
 unsigned int16 gblFlashBaseAddress = 0;
 unsigned int16 gblRecordPtr = 0;
 unsigned int16 gblMemPtr = 0;
 unsigned int16 gblRWCount = 0;
+
+//############################################
+//New
+
+//Main Control
+int1 start_stop_logo_machine = 0;
+int1 gblLogoIsRunning = 0;
+unsigned int16 time_button_pressed = 0;
+unsigned int16 gblTimer = 0;
+int gblCurSensorChannel = 0;
+int1 beep_is_high = 0;
+
+//motors Config
+unsigned int16 mtrPwmPin[MTR_COUNT]; //pins
+unsigned int16 mtrS1[MTR_COUNT]={  M0_S1, M1_S1, M2_S1, M3_S1};
+unsigned int16 mtrS2[MTR_COUNT]={  M0_S2, M1_S2, M2_S2, M3_S2};
+unsigned int16 mtrEnable[MTR_COUNT]={ M0_ENB, M1_ENB, M2_ENB, M3_ENB};
+unsigned int16 mtrChipEnable[MTR_COUNT/2]={  MTR_AB_ENB, MTR_CD_ENB};
+//motors Control
+int1 intrp0Enabled;
+int1 motor_onfor_needs_to_finish[MTR_COUNT] = {0, 0, 0, 0};
+unsigned int16 motor_onfor[MTR_COUNT] = {0, 0, 0, 0};
+
+unsigned int16 intrp0_count = 0;
+unsigned int8  mtrsOnInterpt;//0000 off , 0000 not controlled by Interrupt
+unsigned int8  mtrsDirectionNextTurn; // 1111 thisway, 1111 Turn On on the next Turn
+unsigned int8  mtrsActive;// A,B,C,D active to send commands
+unsigned int8  mtrsMode;// 01010101 // 85 DC DC DC DC 
+
+unsigned int8  mtrRun[MTR_COUNT];
+unsigned int16 mtrWait[MTR_COUNT];
+unsigned int16 mtrNextInterrupt[MTR_COUNT];
+
+
+
 

@@ -35,7 +35,7 @@ void evalOpcode(unsigned char opcode);
 void flashSetWordAddress(int16 address);
 void flashWrite(int16 InByte);
 void TalkToMotor(int MotorBits);
-void MotorControl(int MotorCmd);
+void MotorControl(int MotorCmd, unsigned int8 param);
 void SetMotorPower(int Power);
 void ChangeMotorPower(int delta);
 void sortMtrDuty();

@@ -321,25 +321,41 @@ void evalOpcode(unsigned char opcode) {
         }
         gblRecordPtr = 0;
         break;
-    case M_OFF:
-        MotorControl(MTR_OFF);
-    case M_THATWAY:
-        MotorControl(MTR_THATWAY);
-    case M_THISWAY:
-        MotorControl(MTR_THISWAY);
-    case M_RD:
-        MotorControl(MTR_RD);
-    case BRAKE:
-        MotorControl(MTR_COAST);
-    case M_ON:
-    case M_ONFOR:
-        MotorControl(MTR_ON);
-        if (opcode == M_ONFOR) {
+    case OPC_MOTORS_OFF:
+        MotorControl(OPC_MOTORS_OFF,0);
+    case OPC_MOTORS_THATWAY:
+        MotorControl(OPC_MOTORS_THATWAY,0);
+    case OPC_MOTORS_THISWAY:
+        MotorControl(OPC_MOTORS_THISWAY,0);
+    case OPC_MOTORS_REVERT:
+        MotorControl(OPC_MOTORS_REVERT,0);
+        break;
+    case OPC_MOTORS_ON_FOR:
+    case OPC_MOTORS_ON:
+        MotorControl(OPC_MOTORS_ON,0);
+        if (opcode == OPC_MOTORS_ON_FOR) {
             set_on_for(stkPop()*4);
         }
         break;
-    case SETPOWER:
-        SetMotorPower(stkPop());
+    case OPC_MOTORS_POWER:
+        MotorControl(OPC_MOTORS_POWER,stkPop());
+        break;
+    case OPC_MOTORS_ANGLE:
+        //TODO refazer tudo isso
+        //MotorControl(MTR_ON);
+        //MotorControl(MTR_THISWAY);
+        //SetMotorMode(MOTOR_SERVO);
+        i = stkPop();
+        if (opcode == SERVO_SET_H) {
+            //SetMotorPower(i);
+        } else if (opcode == SERVO_LT){
+            //ChangeMotorPower(i);
+        } else {
+            //ChangeMotorPower(-1*i);
+        }
+        break;
+    case OPC_ACTIVATE_MOTORS:
+        mtrsActive = stkPop();
         break;
     case REALLY_STOP:
         start_stop_logo_machine = 1;
@@ -395,24 +411,7 @@ void evalOpcode(unsigned char opcode) {
     case ULED_OFF:
         output_low(USER_LED);
         break;
-    case SERVO_SET_H:
-    case SERVO_LT:
-    case SERVO_RT:
-        MotorControl(MTR_ON);
-        MotorControl(MTR_THISWAY);
-        SetMotorMode(MOTOR_SERVO);
-        i = stkPop();
-        if (opcode == SERVO_SET_H) {
-            SetMotorPower(i);
-        } else if (opcode == SERVO_LT){
-            ChangeMotorPower(i);
-        } else {
-            ChangeMotorPower(-1*i);
-        }
-        break;
-    case TALK_TO_MOTOR:
-        gblActiveMotors = stkPop();
-        break;
+
     case CL_I2C_START:
         i2c_start();
         break;
