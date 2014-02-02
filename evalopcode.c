@@ -322,37 +322,29 @@ void evalOpcode(unsigned char opcode) {
         gblRecordPtr = 0;
         break;
     case OPC_MOTORS_OFF:
-        MotorControl(OPC_MOTORS_OFF,0);
+        motors_off();
+        break;
     case OPC_MOTORS_THATWAY:
-        MotorControl(OPC_MOTORS_THATWAY,0);
+        motors_that_way();
+        break;
     case OPC_MOTORS_THISWAY:
-        MotorControl(OPC_MOTORS_THISWAY,0);
+        motors_this_way();
+        break;
     case OPC_MOTORS_REVERT:
-        MotorControl(OPC_MOTORS_REVERT,0);
+        motors_reverse();
         break;
     case OPC_MOTORS_ON_FOR:
     case OPC_MOTORS_ON:
-        MotorControl(OPC_MOTORS_ON,0);
+        motors_on();
         if (opcode == OPC_MOTORS_ON_FOR) {
             set_on_for(stkPop()*4);
         }
         break;
     case OPC_MOTORS_POWER:
-        MotorControl(OPC_MOTORS_POWER,stkPop());
+        motors_power(stkPop());
         break;
     case OPC_MOTORS_ANGLE:
-        //TODO refazer tudo isso
-        //MotorControl(MTR_ON);
-        //MotorControl(MTR_THISWAY);
-        //SetMotorMode(MOTOR_SERVO);
-        i = stkPop();
-        if (opcode == SERVO_SET_H) {
-            //SetMotorPower(i);
-        } else if (opcode == SERVO_LT){
-            //ChangeMotorPower(i);
-        } else {
-            //ChangeMotorPower(-1*i);
-        }
+        motors_angle(stkPop());
         break;
     case OPC_ACTIVATE_MOTORS:
         mtrsActive = stkPop();
